@@ -25,20 +25,18 @@ xVals, yVals = cleanData("BigEQPTest.txt")
 unaltered = Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                   xLabel="Amplitude (px)", yLabel="Time (s)")
 fit = unaltered.getCurveFit(quadratic)
+fit.setTitle("Fit")
 plt.subplot(221)
 fit.plot()
 unaltered.plot()
-driftRmDat = unaltered.getRawData()[1] - fit.getRawData()[1]
-driftRm = Graph(title="Drift Removed", rawXData=unaltered.getRawData()[0], rawYData=driftRmDat,
-                autoScaleMagnitude=False)
+driftRm = unaltered-fit
+driftRm.setTitle("Drift Removed")
 plt.subplot(222)
 driftRm.plot()
-unitConverted = Graph(title="Unit Converted Data", rawXData=driftRm.getRawData()[0],
-                      rawYData=driftRm.getRawData()[1]/14287, yLabel="Position (rad)", xLabel="Time (s)")
+unitConverted = driftRm.convertUnits(yMultiplier=1.0/142857.0, yLabel="Position (rad)")
 plt.subplot(223)
 unitConverted.plot()
-subsection = Graph(title="Sliced graph", rawXData=unitConverted.getRawData()[0][6000:100000],
-                   rawYData=unitConverted.getRawData()[1][6000:100000])
+subsection = unitConverted.slice(begin=60000, end=100000)
 plt.subplot(224)
 subsection.plot()
 plt.show()

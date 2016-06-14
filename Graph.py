@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
-import math
+
 
 class Graph:
 
@@ -30,19 +30,22 @@ class Graph:
         return self.rawXData, self.rawYData
 
     def setTitle(self, title):
+        """Sets the title of the graph"""
         self.title = title
 
     def setXLabel(self, label):
+        """Sets the x label of the graph"""
         self.xLabel = label
 
     def setYLabel(self, label):
+        """Sets the y label of the graph"""
         self.yLabel = label
 
     def getMagnitudes(self, forceAutoScale=False):
-        """Returns a tuple of the magnitudes of the first point of (x data, y data)
+        """Returns the order of 10 magnitude of the data if autoScaleData is set to true
 
-        forceAutoScale can be set to true to ensure that you receive the actual magnitudes of the first data point
-        (for use when fitting curves and magnitudes as near as possible to 1 are needed)
+        Otherwise, it returns the specified scale (default 1)
+        ForceAutoScale calculates the actual order of magnitude of the data no matter what.
         """
         if self.autoScaleMagnitude or forceAutoScale:
             rawX, rawY = self.getRawData()
@@ -76,6 +79,7 @@ class Graph:
         plt.title(str(self.title))
 
     def scatter(self, subplot=None):
+        """Shortcut for scatter=True default in plot()"""
         self.plot(subplot=subplot, scatter=True)
 
     def getCurveFit(self, fitFunction):
@@ -89,13 +93,34 @@ class Graph:
         return Graph(rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
                      autoScaleMagnitude=self.autoScaleMagnitude, title=self.title, xLabel=self.xLabel,
-                     yLabel=self.yLabel)  # TODO TEST MORE
+                     yLabel=self.yLabel)
         # (raw vs. scaled - consult)
 
+    def convertUnits(self, xMultiplier=1, yMultiplier=1, xLabel=None, yLabel=None):
+        """Returns a Graph with data multiplied by specified multipliers. Allows setting new labels for units."""
+        return Graph(title=str(self.title) + " (converted)", xLabel=(self.xLabel if not xLabel else xLabel),
+                     yLabel=(self.yLabel if not yLabel else yLabel),
+                     rawXData=self.getRawData()[0]*xMultiplier, rawYData=self.getRawData()[1]*yMultiplier,
+                     autoScaleMagnitude=self.autoScaleMagnitude)
+
+    def slice(self, begin=0, end=None, step=1):
+        """Returns a Graph of the current graph's data from begin to end in steps of step.
+
+        Begin defaults to 0, end to len(data)-1, step to 1.
+        """
+        end = len(self.getRawData()[0] - 1) if not end else end
+        return Graph(title=str(self.title) + " from point " + str(begin) + " to " + str(end),
+                     xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][begin:end:step],
+                     rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)
+
     def __sub__(self, other):
-        if isinstance(other, Graph):
+        """Subtracts the y data of two graphs and returns the resulting Graph.
+
+        Returns a NotImplemented singleton if used on a non-graph object or the data sets are not of the same length.
+        """
+        if isinstance(other, Graph) and len(self.getRawData()) == len(other.getRawData()):
             return Graph(title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData[1]-other.getRawData()[1],
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1]-other.getRawData()[1],
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
