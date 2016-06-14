@@ -7,9 +7,10 @@ class Graph:
 
     def __init__(self, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
                  yMagnitude=0, autoScaleMagnitude=False):
-        """Creates a graph including code for proper scaling into scientific notation and curve fitting.
+        """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
-        To plot multiple graphs on the same axis, simply refrain from subplotting.
+        To plot multiple graphs on the same axis, simply refrain from subplotting. A subplot may optionally be specified
+        when displaying a graph.
         Creates a point at (0, 0) by default.
         """
         self.title = title
@@ -74,9 +75,14 @@ class Graph:
             (plt if not subplot else subplot).scatter(xVals, yVals)
         else:
             (plt if not subplot else subplot).plot(xVals, yVals)
-        plt.xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
-        plt.ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
-        plt.title(str(self.title))
+        if not subplot:
+            plt.xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
+            plt.ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
+            plt.title(str(self.title))
+        else:
+            subplot.set_xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
+            subplot.set_ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
+            subplot.set_title(str(self.title))
 
     def scatter(self, subplot=None):
         """Shortcut for scatter=True default in plot()"""
