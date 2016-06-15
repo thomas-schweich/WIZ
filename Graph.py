@@ -2,11 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
+__author__ = "Thomas Schweich"
+
 
 class Graph:
 
     def __init__(self, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
-                 yMagnitude=0, autoScaleMagnitude=False):
+                 yMagnitude=0, autoScaleMagnitude=False, subplot=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
         To plot multiple graphs on the same axis, simply refrain from subplotting. A subplot may optionally be specified
@@ -21,6 +23,7 @@ class Graph:
         self.xMagnitude = xMagnitude
         self.yMagnitude = yMagnitude
         self.autoScaleMagnitude = autoScaleMagnitude
+        self.subplot = subplot
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -41,6 +44,9 @@ class Graph:
     def setYLabel(self, label):
         """Sets the y label of the graph"""
         self.yLabel = label
+
+    def setSubplot(self, sbplt):
+        self.subplot = sbplt
 
     def getMagnitudes(self, forceAutoScale=False):
         """Returns the order of 10 magnitude of the data if autoScaleData is set to true
@@ -71,6 +77,7 @@ class Graph:
         """Plots a PyPlot of the graph"""
         xMag, yMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData()
+        subplot = (self.subplot if not subplot else subplot)
         if scatter:
             (plt if not subplot else subplot).scatter(xVals, yVals)
         else:
@@ -118,6 +125,10 @@ class Graph:
         return Graph(title=str(self.title) + " from point " + str(begin) + " to " + str(end),
                      xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][begin:end:step],
                      rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)
+
+    def onClick(self, event):
+        if event.inaxes is self.subplot:
+            print str(self.title) + " was clicked."
 
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.

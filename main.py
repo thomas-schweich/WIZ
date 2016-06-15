@@ -1,10 +1,12 @@
 import matplotlib
 matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 import numpy as np
 from Graph import Graph
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
+from matplotlib.widgets import Button
 
 import sys
 if sys.version_info[0] < 3:
@@ -43,19 +45,27 @@ def quadratic(x, a, b, c):
 def sinusoid(x, a, b, c, d):
     return a*(np.sin(b*x + c)) + d
 
+def test():
+    print "Graph was clicked"
+
+
+plt.style.use("ggplot")
+
 root = Tk.Tk()
 root.wm_title("Data Manipulation")
 
-f = Figure(figsize=(5, 4), dpi=80)
+f = Figure(figsize=(5, 4), dpi=150)
 
 xVals, yVals = cleanData("BigEQPTest.txt")
-unaltered = Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=True,
+unaltered = Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                   yLabel="Amplitude (px)", xLabel="Time (s)")
 unalteredSub = f.add_subplot(221)
-unaltered.plot(subplot=unalteredSub)
+unaltered.setSubplot(unalteredSub)
+unaltered.plot()
 fit = unaltered.getCurveFit(quadratic)
 fit.setTitle("Fit")
-fit.plot(subplot=unalteredSub)
+fit.setSubplot(unalteredSub)
+fit.plot()
 driftRm = unaltered-fit
 driftRm.setTitle("Drift Removed")
 driftRmSub = f.add_subplot(222)
@@ -80,4 +90,10 @@ canvas.mpl_connect('key_press_event', on_key_event)
 button = Tk.Button(master=root, text='Quit', command=_quit)
 button.pack(side=Tk.BOTTOM)
 
+cid = f.canvas.mpl_connect('button_press_event', unaltered.onClick)
+'''
+axes = unalteredSub.get_axes()
+axesButton = Button(axes, "")
+axesButton.on_clicked(unaltered.onClick)
+'''
 Tk.mainloop()
