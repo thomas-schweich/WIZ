@@ -45,9 +45,6 @@ def quadratic(x, a, b, c):
 def sinusoid(x, a, b, c, d):
     return a*(np.sin(b*x + c)) + d
 
-def test():
-    print "Graph was clicked"
-
 
 plt.style.use("ggplot")
 
@@ -87,8 +84,8 @@ canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
 canvas.mpl_connect('key_press_event', on_key_event)
 
-button = Tk.Button(master=root, text='Quit', command=_quit)
-button.pack(side=Tk.BOTTOM)
+#button = Tk.Button(master=root, text='Quit', command=_quit)
+#button.pack(side=Tk.BOTTOM)
 
 cid = f.canvas.mpl_connect('button_press_event', unaltered.onClick)
 '''

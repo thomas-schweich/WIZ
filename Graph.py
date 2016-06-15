@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
+import Tkinter as Tk
 
 __author__ = "Thomas Schweich"
 
@@ -24,6 +25,7 @@ class Graph:
         self.yMagnitude = yMagnitude
         self.autoScaleMagnitude = autoScaleMagnitude
         self.subplot = subplot
+        self.graphWindow = GraphWindow(self)
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -67,9 +69,9 @@ class Graph:
         Meant to return a value between 1 and 10 for scientific notation.
         """
         if not xMag:
-            xMag = self.getMagnitudes()[0] if not forceAutoScale else self.getMagnitudes(forceAutoScale=True)[0]
+            xMag = (self.getMagnitudes(forceAutoScale=True)[0] if forceAutoScale else self.getMagnitudes()[0])
         if not yMag:
-            yMag = self.getMagnitudes()[1] if not forceAutoScale else self.getMagnitudes(forceAutoScale=True)[1]
+            yMag = (self.getMagnitudes(forceAutoScale=True)[1] if forceAutoScale else self.getMagnitudes()[1])
         xData, yData = self.getRawData()
         return xData/10**xMag, yData/10**yMag
 
@@ -129,6 +131,9 @@ class Graph:
     def onClick(self, event):
         if event.inaxes is self.subplot:
             print str(self.title) + " was clicked."
+            self.graphWindow.open()
+
+
 
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.
@@ -141,3 +146,14 @@ class Graph:
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
+
+class GraphWindow(Tk.Frame):
+    def __init__(self, graph, *args, **kwargs):
+        Tk.Frame.__init__(self, *args, **kwargs)
+        self.graph = graph
+
+    def open(self):
+        t = Tk.Toplevel(self)
+        t.wm_title(str(self.graph.title))
+        l = Tk.Label(t, text="This is " + str(self.graph.title))
+        l.pack(side="top", fill="both", expand=True, padx=100, pady=100)
