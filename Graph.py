@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 import Tkinter as Tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
+
 
 __author__ = "Thomas Schweich"
 
@@ -26,6 +29,7 @@ class Graph:
         self.autoScaleMagnitude = autoScaleMagnitude
         self.subplot = subplot
         self.graphWindow = GraphWindow(self)
+
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -133,8 +137,6 @@ class Graph:
             print str(self.title) + " was clicked."
             self.graphWindow.open()
 
-
-
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.
 
@@ -147,13 +149,58 @@ class Graph:
         else:
             return NotImplemented
 
+
 class GraphWindow(Tk.Frame):
+
     def __init__(self, graph, *args, **kwargs):
         Tk.Frame.__init__(self, *args, **kwargs)
         self.graph = graph
+        self.window = None
+        self.fitOptions = False
+        self.fitButton = None
+        self.fitQuadratic = None
+        self.graph.plot()
+        '''
+        f = Figure(figsize=(5, 4), dpi=150)
+        subPlot = f.add_subplot(111)
+        self.graph.plot(subplot=subPlot)
+        '''
 
     def open(self):
-        t = Tk.Toplevel(self)
-        t.wm_title(str(self.graph.title))
-        l = Tk.Label(t, text="This is " + str(self.graph.title))
-        l.pack(side="top", fill="both", expand=True, padx=100, pady=100)
+        """Opens a graph window only if there isn't already one open for this GraphWindow
+
+        Thus only one window per Graph can be open using this method (assuming Graphs only have one GraphWindow)"""
+        if self.window is None:
+            self.window = Tk.Toplevel(self)
+            self.window.wm_title(str(self.graph.title))
+            label = Tk.Label(self.window, text="This is " + str(self.graph.title))
+            label.pack(side="top", fill="both", expand=True, padx=100, pady=100)
+            self.window.protocol("WM_DELETE_WINDOW", self.close)
+            self.populate()
+
+    def close(self):
+        """Destroys the window, sets the GraphWindows's window instance to None"""
+        self.window.destroy()
+        self.window = None
+
+    def populate(self):
+        self.fitButton = Tk.Checkbutton(self.window, command=self.toggleFitOptions)
+        self.fitButton.pack()
+
+    def toggleFitOptions(self):
+        if self.fitOptions:
+            self.fitOptions = False
+            self.fitQuadratic.destroy()
+        else:
+            self.fitOptions = True
+            self.fitQuadratic = self.addWidget(Tk.Button, command=self.fit)
+
+    def addWidget(self, widgetType, **kwargs):
+        wid = widgetType(self.window, **kwargs)
+        wid.pack()
+        return wid
+
+    def fit(self):
+        print "Fit called"
+
+
