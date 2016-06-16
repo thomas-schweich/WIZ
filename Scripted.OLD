@@ -1,4 +1,3 @@
-'''
 xMagnitude = int(math.floor(math.log10(xVals[0])))
 yMagnitude = int(math.floor(math.log10(yVals[0])))
 
@@ -30,4 +29,3 @@ plt.ylabel("x10^%d" % yMagnitude)
 plt.subplot(2, 1, 2)
 driftRm = scaledYVals-fit
 plt.plot(scaledXVals, driftRm)
-'''
