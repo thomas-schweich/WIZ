@@ -4,6 +4,7 @@ from scipy.optimize import curve_fit
 import Tkinter as Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+from copy import copy
 
 
 __author__ = "Thomas Schweich"
@@ -112,7 +113,7 @@ class Graph:
         magAdjustment = forcedYMag-setYMag
         return Graph(rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
-                     autoScaleMagnitude=self.autoScaleMagnitude, title=self.title, xLabel=self.xLabel,
+                     autoScaleMagnitude=self.autoScaleMagnitude, title="Fit for " + self.title, xLabel=self.xLabel,
                      yLabel=self.yLabel)
         # (raw vs. scaled - consult)
 
@@ -155,6 +156,7 @@ class Graph:
         else:
             return NotImplemented
 
+from MainWindow import MainWindow
 
 class GraphWindow(Tk.Frame):
 
@@ -162,6 +164,7 @@ class GraphWindow(Tk.Frame):
         """A frame object who's open() method creates a Tk.Toplevel (new window) with its contents"""
         self.graph = graph
         self.newGraph = None
+        self.newSubPlot = None
         self.root = self.graph.root
         Tk.Frame.__init__(self, *args, **kwargs)
         self.window = None
@@ -170,6 +173,7 @@ class GraphWindow(Tk.Frame):
         self.fitQuadratic = None
         self.canvas = None
         self.pack()
+        self.f = None
 
     def open(self):
         """Opens a graph window only if there isn't already one open for this GraphWindow
@@ -178,20 +182,20 @@ class GraphWindow(Tk.Frame):
         if self.window is None:
             self.window = Tk.Toplevel(self)
             self.window.wm_title(str(self.graph.title))
-            label = Tk.Label(self.window, text="This is " + str(self.graph.title))
-            label.pack(side="top", fill="both", expand=True, padx=100, pady=100)
+            #label = Tk.Label(self.window, text="This is " + str(self.graph.title))
+            #label.pack(side="top", fill="both", expand=True, padx=100, pady=100)
             self.window.protocol("WM_DELETE_WINDOW", self.close)
-            self.populate()
-            f = Figure(figsize=(2, 1), dpi=150)
-            graphSubPlot = f.add_subplot(121)
+            self.f = Figure(figsize=(2, 1), dpi=150)
+            graphSubPlot = self.f.add_subplot(121)
             self.graph.plot(subplot=graphSubPlot)
-            newSubPlot = f.add_subplot(122)
-            self.newGraph = Graph(title=("Transformation of " + self.graph.title), rawXData=self.graph.getRawData()[0],
-                                  rawYData=self.graph.getRawData()[1])
-            self.newGraph.plot(subplot=newSubPlot)
-            self.canvas = FigureCanvasTkAgg(f, self.window)
+            self.newSubPlot = self.f.add_subplot(122)
+            self.newGraph = copy(self.graph)
+            self.newGraph.setTitle("Transformation of " + str(self.graph.title))
+            self.newGraph.plot(subplot=self.newSubPlot)
+            self.canvas = FigureCanvasTkAgg(self.f, self.window)
             self.canvas.show()
             self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+            self.populate()
 
     def close(self):
         """Destroys the window, sets the GraphWindows's window instance to None"""
@@ -199,8 +203,7 @@ class GraphWindow(Tk.Frame):
         self.window = None
 
     def populate(self):
-        self.fitButton = Tk.Checkbutton(self.window, command=self.toggleFitOptions)
-        self.fitButton.pack()
+        self.fitButton = self.addWidget(Tk.Checkbutton, command=self.toggleFitOptions, text="Fit Options")
 
     def toggleFitOptions(self):
         if self.fitOptions:
@@ -208,12 +211,30 @@ class GraphWindow(Tk.Frame):
             self.fitQuadratic.destroy()
         else:
             self.fitOptions = True
-            self.fitQuadratic = self.addWidget(Tk.Button, command=self.fit)
+            self.fitQuadratic = self.addWidget(Tk.Button, command=self.quadraticFit,
+                                               text="Quadratic Fit")
 
-    def addWidget(self, widgetType, **kwargs):
-        wid = widgetType(self.window, **kwargs)
+    def addWidget(self, widgetType, *args, **kwargs):
+        wid = widgetType(self.window, *args, **kwargs)
         wid.pack()
         return wid
 
-    def fit(self):
-        print "Fit called"
+    def plotWithReference(self, graph):
+        self.f.delaxes(self.newSubPlot)
+        self.newSubPlot = self.f.add_subplot(122)
+        referenceGraph = copy(self.graph)
+        self.newGraph = graph
+        referenceGraph.plot(subplot=self.newSubPlot)
+        self.newGraph.plot(subplot=self.newSubPlot)
+        self.canvas.show()
+
+    def plotAlone(self, graph):
+        self.f.delaxes(self.newSubPlot)
+        self.newSubPlot = self.f.add_subplot(122)
+        self.newGraph = graph
+        self.newGraph.plot(subplot=self.newSubPlot)
+        self.canvas.show()
+
+    def quadraticFit(self):
+        self.plotWithReference(self.graph.getCurveFit(fitFunction=MainWindow.quadratic))
+

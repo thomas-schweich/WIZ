@@ -32,7 +32,7 @@ class MainWindow(Tk.Tk):
         unaltered.setSubplot(unalteredSub)
         unaltered.plot()
         fit = self.addGraph(unaltered.getCurveFit(self.quadratic))
-        fit.setTitle("Fit")
+        #fit.setTitle("Fit")
         fit.setSubplot(unalteredSub)
         fit.plot()
         driftRm = self.addGraph(unaltered - fit)
