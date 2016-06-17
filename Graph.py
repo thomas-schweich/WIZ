@@ -12,7 +12,7 @@ __author__ = "Thomas Schweich"
 class Graph:
 
     def __init__(self, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
-                 yMagnitude=0, autoScaleMagnitude=False, subplot=None):
+                 yMagnitude=0, autoScaleMagnitude=False, subplot=None, root=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
         To plot multiple graphs on the same axis, simply refrain from subplotting. A subplot may optionally be specified
@@ -28,6 +28,7 @@ class Graph:
         self.yMagnitude = yMagnitude
         self.autoScaleMagnitude = autoScaleMagnitude
         self.subplot = subplot
+        self.root = root
         self.graphWindow = GraphWindow(self)
 
 
@@ -83,19 +84,19 @@ class Graph:
         """Plots a PyPlot of the graph"""
         xMag, yMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData()
-        subplot = (self.subplot if not subplot else subplot)
+        sub = (self.subplot if not subplot else subplot)
         if scatter:
-            (plt if not subplot else subplot).scatter(xVals, yVals)
+            (plt if not sub else sub).scatter(xVals, yVals)
         else:
-            (plt if not subplot else subplot).plot(xVals, yVals)
-        if not subplot:
+            (plt if not sub else sub).plot(xVals, yVals)
+        if not sub:
             plt.xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
             plt.ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
             plt.title(str(self.title))
         else:
-            subplot.set_xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
-            subplot.set_ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
-            subplot.set_title(str(self.title))
+            sub.set_xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
+            sub.set_ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
+            sub.set_title(str(self.title))
 
     def scatter(self, subplot=None):
         """Shortcut for scatter=True default in plot()"""
@@ -133,9 +134,14 @@ class Graph:
                      rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)
 
     def onClick(self, event):
-        if event.inaxes is self.subplot:
+        """Opens this Graph's GraphWindow if the event is within its axes and was a double click"""
+        if event.inaxes is self.subplot and event.dblclick:
             print str(self.title) + " was clicked."
             self.graphWindow.open()
+
+    def __repr__(self):
+        """Returns the Graph's title"""
+        return str(self.title)
 
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.
@@ -153,18 +159,17 @@ class Graph:
 class GraphWindow(Tk.Frame):
 
     def __init__(self, graph, *args, **kwargs):
-        Tk.Frame.__init__(self, *args, **kwargs)
+        """A frame object who's open() method creates a Tk.Toplevel (new window) with its contents"""
         self.graph = graph
+        self.newGraph = None
+        self.root = self.graph.root
+        Tk.Frame.__init__(self, *args, **kwargs)
         self.window = None
         self.fitOptions = False
         self.fitButton = None
         self.fitQuadratic = None
-        self.graph.plot()
-        '''
-        f = Figure(figsize=(5, 4), dpi=150)
-        subPlot = f.add_subplot(111)
-        self.graph.plot(subplot=subPlot)
-        '''
+        self.canvas = None
+        self.pack()
 
     def open(self):
         """Opens a graph window only if there isn't already one open for this GraphWindow
@@ -177,6 +182,16 @@ class GraphWindow(Tk.Frame):
             label.pack(side="top", fill="both", expand=True, padx=100, pady=100)
             self.window.protocol("WM_DELETE_WINDOW", self.close)
             self.populate()
+            f = Figure(figsize=(2, 1), dpi=150)
+            graphSubPlot = f.add_subplot(121)
+            self.graph.plot(subplot=graphSubPlot)
+            newSubPlot = f.add_subplot(122)
+            self.newGraph = Graph(title=("Transformation of " + self.graph.title), rawXData=self.graph.getRawData()[0],
+                                  rawYData=self.graph.getRawData()[1])
+            self.newGraph.plot(subplot=newSubPlot)
+            self.canvas = FigureCanvasTkAgg(f, self.window)
+            self.canvas.show()
+            self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
     def close(self):
         """Destroys the window, sets the GraphWindows's window instance to None"""
@@ -202,5 +217,3 @@ class GraphWindow(Tk.Frame):
 
     def fit(self):
         print "Fit called"
-
-

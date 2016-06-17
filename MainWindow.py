@@ -15,59 +15,52 @@ else:
 __author__ = "Thomas Schweich"
 
 
-class MainWindow(Tk.Frame):
+class MainWindow(Tk.Tk):
     def __init__(self, *args, **kwargs):
-        Tk.Frame.__init__(self, *args, **kwargs)
+        Tk.Tk.__init__(self, *args, **kwargs)
         plt.style.use("ggplot")
-        self.root = args[0]
-        self.root.wm_title("Data Manipulation")
+        self.wm_title("Data Manipulation")
+
+        self.graphs = []
 
         f = Figure(figsize=(5, 4), dpi=150)
 
         xVals, yVals = self.cleanData("BigEQPTest.txt")
-        unaltered = Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
-                          yLabel="Amplitude (px)", xLabel="Time (s)")
+        unaltered = self.addGraph(Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
+                          yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
         unalteredSub = f.add_subplot(221)
         unaltered.setSubplot(unalteredSub)
         unaltered.plot()
-        fit = unaltered.getCurveFit(self.quadratic)
+        fit = self.addGraph(unaltered.getCurveFit(self.quadratic))
         fit.setTitle("Fit")
         fit.setSubplot(unalteredSub)
         fit.plot()
-        driftRm = unaltered - fit
+        driftRm = self.addGraph(unaltered - fit)
         driftRm.setTitle("Drift Removed")
         driftRmSub = f.add_subplot(222)
         driftRm.plot(driftRmSub)
-        unitConverted = driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)")
+        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
         unitConvertedSub = f.add_subplot(223)
         unitConverted.plot(unitConvertedSub)
-        subsection = unitConverted.slice(begin=60000, end=100000)
+        subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
         subSectionSub = f.add_subplot(224)
         subsection.plot(subSectionSub)
 
-        self.canvas = FigureCanvasTkAgg(f, master=self.root)
+        print self.graphs
+
+        self.canvas = FigureCanvasTkAgg(f, master=self)
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
-        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.root)
+        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-
-        self.canvas.mpl_connect('key_press_event', self.on_key_event)
-
-        # button = Tk.Button(master=root, text='Quit', command=_quit)
-        # button.pack(side=Tk.BOTTOM)
-
         self.UnalteredOnClickCid = f.canvas.mpl_connect('button_press_event', unaltered.onClick)
-        Tk.mainloop()
+        #Tk.mainloop()
 
     def _quit(self):
         self.root.quit()
         self.root.destroy()
-
-    def on_key_event(self, event):
-        print('you pressed %s' % event.key)
-        key_press_handler(event, self.canvas, self.toolbar)
 
     def cleanData(self, path):
         xData, yData = np.loadtxt(path, unpack=True, dtype=float)
@@ -79,16 +72,27 @@ class MainWindow(Tk.Frame):
         yData = yData[notNans]
         return xData, yData
 
-    def quadratic(self, x, a, b, c):
+    def addGraph(self, graph):
+        self.graphs.append(graph)
+        return graph
+
+    def removeGraph(self, graph):
+        self.graphs.remove(graph)
+
+    @staticmethod
+    def quadratic(x, a, b, c):
         return a * x ** 2 + b * x + c
 
-    def sinusoid(self, x, a, b, c, d):
+    @staticmethod
+    def sinusoid(x, a, b, c, d):
         return a * (np.sin(b * x + c)) + d
 
 
+
 if __name__ == "__main__":
-    root = Tk.Tk()
-    main = MainWindow(root)
-    main.pack(side="top", fill="both", expand=True)
-    root.mainloop()
+    #root = Tk.Tk()
+    main = MainWindow()
+    #main.pack(side="top", fill="both", expand=True)
+    main.mainloop()
+
 
