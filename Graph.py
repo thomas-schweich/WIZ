@@ -30,6 +30,7 @@ class Graph:
         self.autoScaleMagnitude = autoScaleMagnitude
         self.subplot = subplot
         self.root = root
+        self.show = True
         self.graphWindow = GraphWindow(self)
 
 
@@ -55,6 +56,9 @@ class Graph:
 
     def setSubplot(self, sbplt):
         self.subplot = sbplt
+
+    def hide(self):
+        self.show = False
 
     def getMagnitudes(self, forceAutoScale=False):
         """Returns the order of 10 magnitude of the data if autoScaleData is set to true
@@ -109,7 +113,7 @@ class Graph:
         setXMag, setYMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData(forceAutoScale=True)
         fitParams, fitCoVariances = curve_fit(fitFunction, xVals, yVals)  # , maxfev=100000)
-        print fitParams
+        #print fitParams
         magAdjustment = forcedYMag-setYMag
         return Graph(rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
@@ -237,4 +241,3 @@ class GraphWindow(Tk.Frame):
 
     def quadraticFit(self):
         self.plotWithReference(self.graph.getCurveFit(fitFunction=MainWindow.quadratic))
-
