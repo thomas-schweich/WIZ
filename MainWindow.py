@@ -30,23 +30,14 @@ class MainWindow(Tk.Tk):
         xVals, yVals = self.cleanData("BigEQPTest.txt")
         unaltered = self.addGraph(Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                           yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
-        unalteredSub = self.f.add_subplot(221)
-        unaltered.setSubplot(unalteredSub)
-        unaltered.plot()
+        #unalteredSub = self.f.add_subplot(221)
+        unaltered.setSubplot(1)#unalteredSub)
         fit = self.addGraph(unaltered.getCurveFit(self.quadratic))
-        #fit.setTitle("Fit")
-        fit.setSubplot(unalteredSub)
-        fit.plot()
+        fit.setSubplot(1)#unalteredSub)
         driftRm = self.addGraph(unaltered - fit)
         driftRm.setTitle("Drift Removed")
-        driftRmSub = self.f.add_subplot(222)
-        driftRm.plot(driftRmSub)
         unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
-        unitConvertedSub = self.f.add_subplot(223)
-        unitConverted.plot(unitConvertedSub)
         subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
-        subSectionSub = self.f.add_subplot(224)
-        subsection.plot(subSectionSub)
         self.plotGraphs()
         print self.graphs
 
@@ -58,13 +49,13 @@ class MainWindow(Tk.Tk):
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.UnalteredOnClickCid = self.f.canvas.mpl_connect('button_press_event', unaltered.onClick)
-        #Tk.mainloop()
 
     def _quit(self):
         self.root.quit()
         self.root.destroy()
 
-    def cleanData(self, path):
+    @staticmethod
+    def cleanData(path):
         xData, yData = np.loadtxt(path, unpack=True, dtype=float)
         xNans = np.isnan(xData)
         yNans = np.isnan(yData)
@@ -118,7 +109,6 @@ class MainWindow(Tk.Tk):
     @staticmethod
     def sinusoid(x, a, b, c, d):
         return a * (np.sin(b * x + c)) + d
-
 
 
 if __name__ == "__main__":
