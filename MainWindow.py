@@ -26,6 +26,7 @@ class MainWindow(Tk.Tk):
         self.graphs = []
 
         self.f = Figure(figsize=(5, 4), dpi=150)
+        self.canvas = FigureCanvasTkAgg(self.f, master=self)
 
         xVals, yVals = self.cleanData("BigEQPTest.txt")
         unaltered = self.addGraph(Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
@@ -39,14 +40,14 @@ class MainWindow(Tk.Tk):
         subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
         self.plotGraphs()
 
-        self.canvas = FigureCanvasTkAgg(self.f, master=self)
+
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-        self.UnalteredOnClickCid = self.f.canvas.mpl_connect('button_press_event', unaltered.onClick)
+
 
     def _quit(self):
         self.root.quit()
@@ -66,6 +67,7 @@ class MainWindow(Tk.Tk):
     def addGraph(self, graph, parent=None):
         if not parent:
             self.graphs.append([graph])
+            #self.f.canvas.mpl_connect('button_press_event', graph.onClick)
         else:
             for gr in self.graphs:
                 print gr
@@ -74,6 +76,7 @@ class MainWindow(Tk.Tk):
                         if g is parent:
                             gr.append(graph)
         #self.plotGraphs()
+        self.f.canvas.mpl_connect('button_press_event', graph.onClick)
         return graph
 
     def removeGraph(self, graph):
