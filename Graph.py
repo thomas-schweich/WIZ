@@ -1,17 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
+import ttk as Tk
 import Tkinter as Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from copy import copy
 
-
 __author__ = "Thomas Schweich"
 
 
 class Graph:
-
     def __init__(self, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
                  yMagnitude=0, autoScaleMagnitude=False, subplot=None, root=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
@@ -32,7 +31,6 @@ class Graph:
         self.root = root
         self.show = True
         self.graphWindow = GraphWindow(self)
-
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -83,7 +81,7 @@ class Graph:
         if not yMag:
             yMag = (self.getMagnitudes(forceAutoScale=True)[1] if forceAutoScale else self.getMagnitudes()[1])
         xData, yData = self.getRawData()
-        return xData/10**xMag, yData/10**yMag
+        return xData / 10 ** xMag, yData / 10 ** yMag
 
     def plot(self, subplot=None, scatter=False):
         """Plots a PyPlot of the graph"""
@@ -113,8 +111,8 @@ class Graph:
         setXMag, setYMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData(forceAutoScale=True)
         fitParams, fitCoVariances = curve_fit(fitFunction, xVals, yVals)  # , maxfev=100000)
-        #print fitParams
-        magAdjustment = forcedYMag-setYMag
+        # print fitParams
+        magAdjustment = forcedYMag - setYMag
         return Graph(rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
                      autoScaleMagnitude=self.autoScaleMagnitude, title="Fit for " + self.title, xLabel=self.xLabel,
@@ -125,7 +123,7 @@ class Graph:
         """Returns a Graph with data multiplied by specified multipliers. Allows setting new labels for units."""
         return Graph(title=str(self.title) + " (converted)", xLabel=(self.xLabel if not xLabel else xLabel),
                      yLabel=(self.yLabel if not yLabel else yLabel),
-                     rawXData=self.getRawData()[0]*xMultiplier, rawYData=self.getRawData()[1]*yMultiplier,
+                     rawXData=self.getRawData()[0] * xMultiplier, rawYData=self.getRawData()[1] * yMultiplier,
                      autoScaleMagnitude=self.autoScaleMagnitude)
 
     def slice(self, begin=0, end=None, step=1):
@@ -134,7 +132,7 @@ class Graph:
         Begin defaults to 0, end to len(data)-1, step to 1.
         """
         end = len(self.getRawData()[0] - 1) if not end else end
-        return Graph(title=str(self.title) + " from point " + str(begin) + " to " + str(end),
+        return Graph(title=str(self.title) + " from point " + str(int(begin)) + " to " + str(int(end)),
                      xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][begin:end:step],
                      rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)
 
@@ -155,15 +153,16 @@ class Graph:
         """
         if isinstance(other, Graph) and len(self.getRawData()) == len(other.getRawData()):
             return Graph(title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1]-other.getRawData()[1],
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
 
+
 from MainWindow import MainWindow
 
-class GraphWindow(Tk.Frame):
 
+class GraphWindow(Tk.Frame):
     def __init__(self, graph, *args, **kwargs):
         """A frame object who's open() method creates a Tk.Toplevel (new window) with its contents"""
         Tk.Frame.__init__(self, *args, **kwargs)
@@ -180,10 +179,9 @@ class GraphWindow(Tk.Frame):
         self.multBox = None
         self.canvas = None
         self.f = None
-        self.pack()
         self.rbFrame = None
         self.optionsFrame = None
-
+        self.pack()
 
 
     def open(self):
@@ -217,25 +215,42 @@ class GraphWindow(Tk.Frame):
         self.window = None
 
     def populate(self):
+        """Adds all widgets to the window in their proper frames, with proper cascading"""
         # FIT
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",
                                      variable=self.radioVar, value=0)
         self.fitBox.val = 0
         self.addWidget(Tk.Button, parent=self.fitBox, command=self.quadraticFit, text="Quadratic Fit")
+        self.addWidget(Tk.Button, parent=self.fitBox, command=self.linearFit, text="Linear Fit")
 
         # SLICE
         self.sliceBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Slice Options",
                                        variable=self.radioVar, value=1)
         self.sliceBox.val = 1
+        sliceVar = Tk.IntVar()
+        byIndex = self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
+                                 text="By index (from 0 to " + str(len(self.graph.getRawData()[0])) +
+                                      ")", variable=sliceVar, value=0)
+        byXVal = self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
+                                text="By nearest x value (from " + str(self.graph.getRawData()[0][0]) + " to " + str(
+                                    self.graph.getRawData()[0][len(self.graph.getRawData()[0]) - 1]) + ")",
+                                variable=sliceVar, value=1)
+
+        start = self.addWidget(Tk.Entry, parent=self.sliceBox)
+        start.insert(0, "Start")
+        end = self.addWidget(Tk.Entry, parent=self.sliceBox)
+        end.insert(0, "End")
+        self.addWidget(Tk.Button, parent=self.sliceBox, command=lambda: self.addSlice(sliceVar, start.get(), end.get()),
+                       text="Preview")
 
         # ADD
-        self.addBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Add/Subtract Graphs",
-                                       variable=self.radioVar, value=2)
+        self.addBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions,
+                                     text="Add/Subtract Graphs", variable=self.radioVar, value=2)
         self.addBox.val = 2
 
         # MULTIPLY
-        self.multBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Multiply/Divide Graphs",
-                                       variable=self.radioVar, value=3)
+        self.multBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions,
+                                      text="Multiply/Divide Graphs", variable=self.radioVar, value=3)
         self.multBox.val = 3
 
     def refreshOptions(self):
@@ -244,6 +259,7 @@ class GraphWindow(Tk.Frame):
             for widget in v:
                 if widget.winfo_exists():
                     widget.pack_forget()
+            # Main Radiobuttons
             try:
                 if k.val == self.radioVar.get():
                     for widget in v:
@@ -292,4 +308,14 @@ class GraphWindow(Tk.Frame):
         self.canvas.show()
 
     def quadraticFit(self):
-        self.plotWithReference(self.graph.getCurveFit(fitFunction=MainWindow.quadratic))
+        self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b, c: a * x ** 2 + b * x + c))
+
+    def linearFit(self):
+        self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b: a * x + b))
+
+    def addSlice(self, tkVar, begin, end):
+        if tkVar.get() == 0:
+            self.plotAlone(self.graph.slice(begin=float(begin), end=float(end)))
+        elif tkVar.get() == 1:
+            results = np.searchsorted(self.graph.getRawData()[0], np.array([np.float64(begin), np.float64(end)]))
+            self.plotAlone(self.graph.slice(begin=results[0], end=results[1]))

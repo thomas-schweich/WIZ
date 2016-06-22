@@ -30,16 +30,14 @@ class MainWindow(Tk.Tk):
         xVals, yVals = self.cleanData("BigEQPTest.txt")
         unaltered = self.addGraph(Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                           yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
-        #unalteredSub = self.f.add_subplot(221)
-        unaltered.setSubplot(1)#unalteredSub)
-        fit = self.addGraph(unaltered.getCurveFit(self.quadratic))
-        fit.setSubplot(1)#unalteredSub)
+        unaltered.setSubplot(1)
+        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered)
+        fit.setSubplot(1)
         driftRm = self.addGraph(unaltered - fit)
         driftRm.setTitle("Drift Removed")
         unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
         subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
         self.plotGraphs()
-        print self.graphs
 
         self.canvas = FigureCanvasTkAgg(self.f, master=self)
         self.canvas.show()
@@ -65,14 +63,25 @@ class MainWindow(Tk.Tk):
         yData = yData[notNans]
         return xData, yData
 
-    def addGraph(self, graph):
-        self.graphs.append(graph)
+    def addGraph(self, graph, parent=None):
+        if not parent:
+            self.graphs.append([graph])
+        else:
+            for gr in self.graphs:
+                print gr
+                if len(gr) > 0:
+                    for g in gr:
+                        if g is parent:
+                            gr.append(graph)
+        #self.plotGraphs()
         return graph
 
     def removeGraph(self, graph):
         self.graphs.remove(graph)
+        #self.plotGraphs()
 
     def plotGraphs(self):
+        '''
         existingSubGraphs = [graph for graph in self.graphs if graph.show and graph.subplot]
         graphsToSubplot = [graph for graph in self.graphs if graph.show]
         self.f.clear()
@@ -93,11 +102,14 @@ class MainWindow(Tk.Tk):
             if not preexistingPlot:
                 orderedGraphs.append([gr])
             i += 1
-        rows = math.ceil(len(orderedGraphs)/2.0)
+        '''
+        length = len(self.graphs)
+        rows = math.ceil(length/2.0)
         subplots = []
-        for index in range(0, len(orderedGraphs)):
+        for index in range(0, length):
             subplots.append(self.f.add_subplot(rows, 2, index+1))
-        for idx, ordered in enumerate(orderedGraphs):
+
+        for idx, ordered in enumerate(self.graphs):
             for g in ordered:
                 g.setSubplot(subplots[idx])
                 g.plot()
