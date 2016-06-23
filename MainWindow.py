@@ -1,17 +1,18 @@
 import matplotlib
+
 matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-import numpy as np
-from Graph import Graph
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.backend_bases import key_press_handler
-from matplotlib.figure import Figure
 import math
 import sys
+
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
     import tkinter as Tk
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
+from Graph import Graph
 
 __author__ = "Thomas Schweich"
 
@@ -29,8 +30,9 @@ class MainWindow(Tk.Tk):
         self.canvas = FigureCanvasTkAgg(self.f, master=self)
 
         xVals, yVals = self.cleanData("BigEQPTest.txt")
-        unaltered = self.addGraph(Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
-                          yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
+        unaltered = self.addGraph(
+            Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
+                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
         unaltered.setSubplot(1)
         fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered)
         fit.setSubplot(1)
@@ -40,14 +42,13 @@ class MainWindow(Tk.Tk):
         subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
         self.plotGraphs()
 
-
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-
+        self.canvas.mpl_connect('button_press_event', self.onClick)
 
     def _quit(self):
         self.root.quit()
@@ -67,21 +68,44 @@ class MainWindow(Tk.Tk):
     def addGraph(self, graph, parent=None):
         if not parent:
             self.graphs.append([graph])
-            #self.f.canvas.mpl_connect('button_press_event', graph.onClick)
+            # self.f.canvas.mpl_connect('button_press_event', graph.onClick)
         else:
-            for gr in self.graphs:
-                print gr
-                if len(gr) > 0:
-                    for g in gr:
+            for axis in self.graphs:
+                print axis
+                if len(axis) > 0:
+                    for g in axis:
                         if g is parent:
-                            gr.append(graph)
-        #self.plotGraphs()
-        self.f.canvas.mpl_connect('button_press_event', graph.onClick)
+                            axis.append(graph)
+        # self.plotGraphs()
+        # self.f.canvas.mpl_connect('button_press_event', graph.onClick)  # Moving to a single connect which calls all
+        #  graphs in graph list
         return graph
+
+    def onClick(self, event):
+        subplot = None
+        if event.dblclick:
+            for axis in self.graphs:
+                if event.inaxes is axis[0].subplot:
+                    self.promptSelect(axis)
+                    return
+
+
+    def promptSelect(self, graphsInAxis):
+        window = Tk.Toplevel()
+        Tk.Label(window, text="Available Graphs on this axis:").pack()
+        for graph in graphsInAxis:
+            Tk.Button(window, text=str(graph.title),
+                      command=graph.openWindow).pack()
+
+    @staticmethod
+    def openGrWinFromDialogue(graph, window):  # Somehow assigning this method as the command makes the buttons always
+                                                #  open the last graph in the list - even in a lambda
+        graph.openWindow()
+        window.destroy()
 
     def removeGraph(self, graph):
         self.graphs.remove(graph)
-        #self.plotGraphs()
+        # self.plotGraphs()
 
     def plotGraphs(self):
         '''
@@ -107,10 +131,10 @@ class MainWindow(Tk.Tk):
             i += 1
         '''
         length = len(self.graphs)
-        rows = math.ceil(length/2.0)
+        rows = math.ceil(length / 2.0)
         subplots = []
         for index in range(0, length):
-            subplots.append(self.f.add_subplot(rows, 2, index+1))
+            subplots.append(self.f.add_subplot(rows, 2, index + 1))
 
         for idx, ordered in enumerate(self.graphs):
             for g in ordered:
@@ -129,5 +153,3 @@ class MainWindow(Tk.Tk):
 if __name__ == "__main__":
     main = MainWindow()
     main.mainloop()
-
-
