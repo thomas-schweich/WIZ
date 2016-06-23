@@ -1,8 +1,16 @@
+import matplotlib
+
+matplotlib.use('TkAgg')
+import math
+import sys
+
+if sys.version_info[0] < 3:
+    import Tkinter as Tk
+else:
+    import tkinter as Tk
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
-import ttk as Tk
-import Tkinter as Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from copy import copy
@@ -140,7 +148,10 @@ class Graph:
         """Opens this Graph's GraphWindow if the event is within its axes and was a double click"""
         if event.inaxes is self.subplot and event.dblclick:
             print str(self.title) + " was clicked."
-            self.graphWindow.open()
+            self.openWindow()
+
+    def openWindow(self):
+        self.graphWindow.open()
 
     def __repr__(self):
         """Returns the Graph's title"""
@@ -156,10 +167,8 @@ class Graph:
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
+
             return NotImplemented
-
-
-from MainWindow import MainWindow
 
 
 class GraphWindow(Tk.Frame):
@@ -182,13 +191,13 @@ class GraphWindow(Tk.Frame):
         self.rbFrame = None
         self.optionsFrame = None
         self.pack()
-
+        self.isOpen = False
 
     def open(self):
         """Opens a graph window only if there isn't already one open for this GraphWindow
 
         Thus only one window per Graph can be open using this method (assuming Graphs only have one GraphWindow)"""
-        if self.window is None:
+        if not self.isOpen:
             self.window = Tk.Toplevel(self)
             self.window.wm_title(str(self.graph.title))
             self.window.protocol("WM_DELETE_WINDOW", self.close)
@@ -211,8 +220,11 @@ class GraphWindow(Tk.Frame):
 
     def close(self):
         """Destroys the window, sets the GraphWindows's Toplevel instance to None"""
+        del self.widgets
+        self.widgets = {}
         self.window.destroy()
-        self.window = None
+        # self.pack_forget()
+        self.isOpen = False
 
     def populate(self):
         """Adds all widgets to the window in their proper frames, with proper cascading"""
@@ -220,6 +232,8 @@ class GraphWindow(Tk.Frame):
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",
                                      variable=self.radioVar, value=0)
         self.fitBox.val = 0
+        self.addWidget(Tk.Button, parent=self.fitBox, command=self.quarticFit, text="Quartic Fit")
+        self.addWidget(Tk.Button, parent=self.fitBox, command=self.cubicFit, text="Cubic Fit")
         self.addWidget(Tk.Button, parent=self.fitBox, command=self.quadraticFit, text="Quadratic Fit")
         self.addWidget(Tk.Button, parent=self.fitBox, command=self.linearFit, text="Linear Fit")
 
@@ -228,13 +242,13 @@ class GraphWindow(Tk.Frame):
                                        variable=self.radioVar, value=1)
         self.sliceBox.val = 1
         sliceVar = Tk.IntVar()
-        byIndex = self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
-                                 text="By index (from 0 to " + str(len(self.graph.getRawData()[0])) +
-                                      ")", variable=sliceVar, value=0)
-        byXVal = self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
-                                text="By nearest x value (from " + str(self.graph.getRawData()[0][0]) + " to " + str(
-                                    self.graph.getRawData()[0][len(self.graph.getRawData()[0]) - 1]) + ")",
-                                variable=sliceVar, value=1)
+        self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
+                       text="By index (from 0 to " + str(len(self.graph.getRawData()[0])) +
+                            ")", variable=sliceVar, value=0)
+        self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
+                       text="By nearest x value (from " + str(self.graph.getRawData()[0][0]) + " to " + str(
+                           self.graph.getRawData()[0][len(self.graph.getRawData()[0]) - 1]) + ")",
+                       variable=sliceVar, value=1)
 
         start = self.addWidget(Tk.Entry, parent=self.sliceBox)
         start.insert(0, "Start")
@@ -307,6 +321,14 @@ class GraphWindow(Tk.Frame):
         self.newGraph.plot(subplot=self.newSubPlot)
         self.canvas.show()
 
+    def quarticFit(self):
+        self.plotWithReference(self.graph.getCurveFit(
+            fitFunction=lambda x, a, b, c, d, e: a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + e))
+
+    def cubicFit(self):
+        self.plotWithReference(
+            self.graph.getCurveFit(fitFunction=lambda x, a, b, c, d: a * x ** 3 + b * x ** 2 + c * x + d))
+
     def quadraticFit(self):
         self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b, c: a * x ** 2 + b * x + c))
 
@@ -319,3 +341,141 @@ class GraphWindow(Tk.Frame):
         elif tkVar.get() == 1:
             results = np.searchsorted(self.graph.getRawData()[0], np.array([np.float64(begin), np.float64(end)]))
             self.plotAlone(self.graph.slice(begin=results[0], end=results[1]))
+
+
+class MainWindow(Tk.Tk):
+    def __init__(self, *args, **kwargs):
+        # noinspection PyCallByClass,PyTypeChecker
+        Tk.Tk.__init__(self, *args, **kwargs)
+        plt.style.use("ggplot")
+        self.wm_title("Data Manipulation")
+
+        self.graphs = []
+
+        self.f = Figure(figsize=(5, 4), dpi=150)
+        self.canvas = FigureCanvasTkAgg(self.f, master=self)
+
+        xVals, yVals = self.cleanData("BigEQPTest.txt")
+        unaltered = self.addGraph(
+            Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
+                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
+        unaltered.setSubplot(1)
+        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered)
+        fit.setSubplot(1)
+        driftRm = self.addGraph(unaltered - fit)
+        driftRm.setTitle("Drift Removed")
+        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
+        subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
+        self.plotGraphs()
+
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+
+        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
+        self.toolbar.update()
+        self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        self.canvas.mpl_connect('button_press_event', self.onClick)
+
+    def _quit(self):
+        self.root.quit()
+        self.root.destroy()
+
+    @staticmethod
+    def cleanData(path):
+        xData, yData = np.loadtxt(path, unpack=True, dtype=float)
+        xNans = np.isnan(xData)
+        yNans = np.isnan(yData)
+        nans = np.logical_or(xNans, yNans)
+        notNans = np.logical_not(nans)
+        xData = xData[notNans]
+        yData = yData[notNans]
+        return xData, yData
+
+    def addGraph(self, graph, parent=None):
+        if not parent:
+            self.graphs.append([graph])
+            # self.f.canvas.mpl_connect('button_press_event', graph.onClick)
+        else:
+            for axis in self.graphs:
+                print axis
+                if len(axis) > 0:
+                    for g in axis:
+                        if g is parent:
+                            axis.append(graph)
+        # self.plotGraphs()
+        # self.f.canvas.mpl_connect('button_press_event', graph.onClick)  # Moving to a single connect which calls all
+        #  graphs in graph list
+        return graph
+
+    def onClick(self, event):
+        subplot = None
+        if event.dblclick:
+            for axis in self.graphs:
+                if event.inaxes is axis[0].subplot:
+                    self.promptSelect(axis)
+                    return
+
+
+    def promptSelect(self, graphsInAxis):
+        window = Tk.Toplevel()
+        Tk.Label(window, text="Available Graphs on this axis:").pack()
+        for graph in graphsInAxis:
+            Tk.Button(window, text=str(graph.title),
+                      command=graph.openWindow).pack()
+
+    @staticmethod
+    def openGrWinFromDialogue(graph, window):  # Somehow assigning this method as the command makes the buttons always
+                                                #  open the last graph in the list - even in a lambda
+        graph.openWindow()
+        window.destroy()
+
+    def removeGraph(self, graph):
+        self.graphs.remove(graph)
+        # self.plotGraphs()
+
+    def plotGraphs(self):
+        '''
+        existingSubGraphs = [graph for graph in self.graphs if graph.show and graph.subplot]
+        graphsToSubplot = [graph for graph in self.graphs if graph.show]
+        self.f.clear()
+        orderedGraphs = []
+        i = 0
+        for gr in graphsToSubplot:
+            preexistingPlot = False
+            for sub in existingSubGraphs:
+                if gr.subplot is sub.subplot and gr is not sub:
+                    childList = []
+                    for x in orderedGraphs:
+                        if sub in x:
+                            childList = x
+                    if len(childList) > 0:
+                        orderedGraphs[orderedGraphs.index(childList)].append(gr)
+                        preexistingPlot = True
+                        i -= 1
+            if not preexistingPlot:
+                orderedGraphs.append([gr])
+            i += 1
+        '''
+        length = len(self.graphs)
+        rows = math.ceil(length / 2.0)
+        subplots = []
+        for index in range(0, length):
+            subplots.append(self.f.add_subplot(rows, 2, index + 1))
+
+        for idx, ordered in enumerate(self.graphs):
+            for g in ordered:
+                g.setSubplot(subplots[idx])
+                g.plot()
+
+    @staticmethod
+    def quadratic(x, a, b, c):
+        return a * x ** 2 + b * x + c
+
+    @staticmethod
+    def sinusoid(x, a, b, c, d):
+        return a * (np.sin(b * x + c)) + d
+
+
+if __name__ == "__main__":
+    main = MainWindow()
+    main.mainloop()
