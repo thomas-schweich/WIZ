@@ -9,7 +9,7 @@ __author__ = "Thomas Schweich"
 
 
 class Graph:
-    def __init__(self, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
+    def __init__(self, window, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
                  yMagnitude=0, autoScaleMagnitude=False, subplot=None, root=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
@@ -17,6 +17,7 @@ class Graph:
         when displaying a graph.
         Creates a point at (0, 0) by default.
         """
+        self.window = window
         self.title = title
         self.xLabel = xLabel
         self.yLabel = yLabel
@@ -53,8 +54,14 @@ class Graph:
     def setSubplot(self, sbplt):
         self.subplot = sbplt
 
+    def show(self):
+        self.show = True
+
     def hide(self):
         self.show = False
+
+    def isShown(self):
+        return self.show
 
     def getMagnitudes(self, forceAutoScale=False):
         """Returns the order of 10 magnitude of the data if autoScaleData is set to true
@@ -111,7 +118,7 @@ class Graph:
         fitParams, fitCoVariances = curve_fit(fitFunction, xVals, yVals)  # , maxfev=100000)
         # print fitParams
         magAdjustment = forcedYMag - setYMag
-        return Graph(rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
+        return Graph(self.window, rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
                      autoScaleMagnitude=self.autoScaleMagnitude, title="Fit for " + self.title, xLabel=self.xLabel,
                      yLabel=self.yLabel)
@@ -119,7 +126,7 @@ class Graph:
 
     def convertUnits(self, xMultiplier=1, yMultiplier=1, xLabel=None, yLabel=None):
         """Returns a Graph with data multiplied by specified multipliers. Allows setting new labels for units."""
-        return Graph(title=str(self.title) + " (converted)", xLabel=(self.xLabel if not xLabel else xLabel),
+        return Graph(self.window, title=str(self.title) + " (converted)", xLabel=(self.xLabel if not xLabel else xLabel),
                      yLabel=(self.yLabel if not yLabel else yLabel),
                      rawXData=self.getRawData()[0] * xMultiplier, rawYData=self.getRawData()[1] * yMultiplier,
                      autoScaleMagnitude=self.autoScaleMagnitude)
@@ -130,7 +137,7 @@ class Graph:
         Begin defaults to 0, end to len(data)-1, step to 1.
         """
         end = len(self.getRawData()[0] - 1) if not end else end
-        return Graph(title=str(self.title) + " from point " + str(int(begin)) + " to " + str(int(end)),
+        return Graph(self.window, title=str(self.title) + " from point " + str(int(begin)) + " to " + str(int(end)),
                      xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][begin:end:step],
                      rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)
 
@@ -153,7 +160,7 @@ class Graph:
         Returns a NotImplemented singleton if used on a non-graph object or the data sets are not of the same length.
         """
         if isinstance(other, Graph) and len(self.getRawData()) == len(other.getRawData()):
-            return Graph(title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
+            return Graph(self.window, title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:

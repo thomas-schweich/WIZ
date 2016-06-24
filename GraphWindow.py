@@ -32,8 +32,13 @@ class GraphWindow(Tk.Frame):
         self.multBox = None
         self.canvas = None
         self.f = None
+        self.baseGroup = None
+        self.leftGroup = None
+        self.dynamicOptionGroup = None
         self.rbFrame = None
         self.optionsFrame = None
+        self.graphOptionsFrame = None
+        self.TransformationOptionsFrame = None
         self.pack()
         self.isOpen = False
 
@@ -55,10 +60,20 @@ class GraphWindow(Tk.Frame):
             self.canvas = FigureCanvasTkAgg(self.f, self.window)
             self.canvas.show()
             self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-            self.optionsFrame = Tk.Frame(self.window)
-            self.optionsFrame.pack(side=Tk.BOTTOM, fill=Tk.BOTH)
-            self.rbFrame = Tk.Frame(self.window)
-            self.rbFrame.pack(side=Tk.BOTTOM, fill=Tk.BOTH)
+            self.baseGroup = Tk.Frame(self.window)
+            self.baseGroup.pack(side=Tk.BOTTOM, fill=Tk.BOTH)
+            self.leftGroup = Tk.Frame(self.baseGroup)
+            self.leftGroup.pack(side=Tk.LEFT)
+            self.TransformationOptionsFrame = Tk.Frame(self.leftGroup)
+            self.TransformationOptionsFrame.pack(side=Tk.TOP, fill=Tk.BOTH)
+            self.graphOptionsFrame = Tk.Frame(self.leftGroup)
+            self.graphOptionsFrame.pack(side=Tk.TOP, fill=Tk.BOTH)
+            self.dynamicOptionGroup = Tk.Frame(self.baseGroup)
+            self.dynamicOptionGroup.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
+            self.optionsFrame = Tk.Frame(self.dynamicOptionGroup)
+            self.optionsFrame.pack(side=Tk.BOTTOM, fill=Tk.BOTH, expand=1)
+            self.rbFrame = Tk.Frame(self.dynamicOptionGroup)
+            self.rbFrame.pack(side=Tk.TOP, fill=Tk.BOTH)
             self.populate()
             self.refreshOptions()
 
@@ -72,6 +87,17 @@ class GraphWindow(Tk.Frame):
 
     def populate(self):
         """Adds all widgets to the window in their proper frames, with proper cascading"""
+        # BASE OPTIONS
+        Tk.Label(self.TransformationOptionsFrame, text="Transformation Options").pack(fill=Tk.X)
+        Tk.Button(self.TransformationOptionsFrame, text="Plot on This Axis", command=self.plotOnThisAxis).pack(fill=Tk.X)
+        Tk.Button(self.TransformationOptionsFrame, text="Plot on New Axis", command=self.plotOnNewAxis).pack(fill=Tk.X)
+        Tk.Button(self.TransformationOptionsFrame, text="Cancel", command=self.close).pack(fill=Tk.X)
+        Tk.Label(self.graphOptionsFrame, text="Graph Options").pack(fill=Tk.X)
+        Tk.Button(self.graphOptionsFrame, text="Save Graph").pack(fill=Tk.X)
+        Tk.Button(self.graphOptionsFrame, text="Save Data").pack(fill=Tk.X)
+        Tk.Button(self.graphOptionsFrame, text="Delete Graph").pack(fill=Tk.X)
+        Tk.Checkbutton(self.graphOptionsFrame, text="Show").pack(fill=Tk.X)
+
         # FIT
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",
                                      variable=self.radioVar, value=0)
@@ -121,9 +147,10 @@ class GraphWindow(Tk.Frame):
             try:
                 if k.val == self.radioVar.get():
                     for widget in v:
-                        widget.pack(side=Tk.TOP)
+                        widget.pack(side=Tk.TOP, expand=0)
             except AttributeError:
-                pass
+                for widget in v:
+                    widget.pack(side=Tk.BOTTOM, expand=1)
 
     def addWidget(self, widgetType, parent=None, *args, **kwargs):
         """Adds a widget to the window.
@@ -148,7 +175,7 @@ class GraphWindow(Tk.Frame):
         return wid
 
     def plotWithReference(self, graph):
-        """Plots the graph while maintaining a copy of the original graph on the same axes"""
+        """Plots the graph in the window while maintaining a copy of the original graph on the same axes"""
         self.f.delaxes(self.newSubPlot)
         self.newSubPlot = self.f.add_subplot(122)
         referenceGraph = copy(self.graph)
@@ -164,6 +191,12 @@ class GraphWindow(Tk.Frame):
         self.newGraph = graph
         self.newGraph.plot(subplot=self.newSubPlot)
         self.canvas.show()
+
+    def plotOnThisAxis(self):
+        self.graph.window.addGraph(self.newGraph, parent=self.graph)
+
+    def plotOnNewAxis(self):
+        self.graph.window.addGraph(self.newGraph)
 
     def quarticFit(self):
         self.plotWithReference(self.graph.getCurveFit(
@@ -185,3 +218,4 @@ class GraphWindow(Tk.Frame):
         elif tkVar.get() == 1:
             results = np.searchsorted(self.graph.getRawData()[0], np.array([np.float64(begin), np.float64(end)]))
             self.plotAlone(self.graph.slice(begin=results[0], end=results[1]))
+

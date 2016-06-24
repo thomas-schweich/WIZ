@@ -14,6 +14,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from Graph import Graph
 from functools import partial
+from copy import copy
 
 __author__ = "Thomas Schweich"
 
@@ -24,32 +25,21 @@ class MainWindow(Tk.Tk):
         Tk.Tk.__init__(self, *args, **kwargs)
         plt.style.use("ggplot")
         self.wm_title("Data Manipulation")
-
         self.graphs = []
-
+        self.buttons = []
+        self.topFrame = Tk.Frame(self)
+        self.topFrame.pack(side=Tk.TOP, fill=Tk.X)
+        self.buttonFrame = Tk.Frame(self.topFrame)
+        self.buttonFrame.pack(side=Tk.TOP, expand=1, fill=Tk.X)
         self.f = Figure(figsize=(5, 4), dpi=150)
         self.canvas = FigureCanvasTkAgg(self.f, master=self)
-
-        xVals, yVals = self.cleanData("BigEQPTest.txt")
-        unaltered = self.addGraph(
-            Graph(title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
-                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
-        unaltered.setSubplot(1)
-        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered)
-        fit.setSubplot(1)
-        driftRm = self.addGraph(unaltered - fit)
-        driftRm.setTitle("Drift Removed")
-        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
-        subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
-        self.plotGraphs()
-
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.canvas.mpl_connect('button_press_event', self.onClick)
+        self.generateEQPGraphs()
 
     def _quit(self):
         self.root.quit()
@@ -80,7 +70,12 @@ class MainWindow(Tk.Tk):
         # self.plotGraphs()
         # self.f.canvas.mpl_connect('button_press_event', graph.onClick)  # Moving to a single connect which calls all
         #  graphs in graph list
+        self.plotGraphs()
         return graph
+
+    def removeGraph(self, graph):
+        self.graphs.remove(graph)
+        # self.plotGraphs()
 
     def onClick(self, event):
         if event.dblclick:
@@ -103,10 +98,6 @@ class MainWindow(Tk.Tk):
     def openGrWinFromDialogue(graph, window):
         graph.openWindow()
         window.destroy()
-
-    def removeGraph(self, graph):
-        self.graphs.remove(graph)
-        # self.plotGraphs()
 
     def plotGraphs(self):
         '''
@@ -131,16 +122,35 @@ class MainWindow(Tk.Tk):
                 orderedGraphs.append([gr])
             i += 1
         '''
-        length = len(self.graphs)
+        self.f.clear()
+        self.clearButtons()
+        graphsToShow = copy(self.graphs)
+        for axis in graphsToShow:
+            for graph in axis:
+                self.buttons.append(Tk.Button(self.buttonFrame, text=str(graph.title), command=graph.openWindow))
+                if not graph.isShown():
+                    axis.remove(graph)
+            if len(axis) < 1:
+                graphsToShow.remove(axis)
+        length = len(graphsToShow)
         rows = math.ceil(length / 2.0)
         subplots = []
         for index in range(0, length):
             subplots.append(self.f.add_subplot(rows, 2, index + 1))
 
-        for idx, ordered in enumerate(self.graphs):
+        for idx, ordered in enumerate(graphsToShow):
             for g in ordered:
                 g.setSubplot(subplots[idx])
                 g.plot()
+
+        for button in self.buttons:
+            button.pack(side=Tk.LEFT, fill=Tk.X, expand=1)
+
+    def clearButtons(self):
+        for b in self.buttons:
+            b.destroy()
+        del self.buttons
+        self.buttons = []
 
     @staticmethod
     def quadratic(x, a, b, c):
@@ -149,6 +159,21 @@ class MainWindow(Tk.Tk):
     @staticmethod
     def sinusoid(x, a, b, c, d):
         return a * (np.sin(b * x + c)) + d
+
+    def generateEQPGraphs(self):
+        xVals, yVals = self.cleanData("BigEQPTest.txt")
+        unaltered = self.addGraph(
+            Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
+                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
+        unaltered.setSubplot(1)
+        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered)
+        fit.setSubplot(1)
+        driftRm = self.addGraph(unaltered - fit)
+        driftRm.setTitle("Drift Removed")
+        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
+        subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
+        #self.plotGraphs()
+
 
 
 if __name__ == "__main__":
