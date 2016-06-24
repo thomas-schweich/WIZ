@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from Graph import Graph
+from functools import partial
 
 __author__ = "Thomas Schweich"
 
@@ -82,24 +83,24 @@ class MainWindow(Tk.Tk):
         return graph
 
     def onClick(self, event):
-        subplot = None
         if event.dblclick:
             for axis in self.graphs:
                 if event.inaxes is axis[0].subplot:
                     self.promptSelect(axis)
                     return
 
-
     def promptSelect(self, graphsInAxis):
-        window = Tk.Toplevel()
-        Tk.Label(window, text="Available Graphs on this axis:").pack()
-        for graph in graphsInAxis:
-            Tk.Button(window, text=str(graph.title),
-                      command=graph.openWindow).pack()
+        if len(graphsInAxis) > 1:
+            window = Tk.Toplevel()
+            Tk.Label(window, text="Available Graphs on this axis:").pack()
+            for graph in graphsInAxis:
+                Tk.Button(window, text=str(graph.title),
+                          command=partial(self.openGrWinFromDialogue, graph, window)).pack()
+        else:
+            graphsInAxis[0].openWindow()
 
     @staticmethod
-    def openGrWinFromDialogue(graph, window):  # Somehow assigning this method as the command makes the buttons always
-                                                #  open the last graph in the list - even in a lambda
+    def openGrWinFromDialogue(graph, window):
         graph.openWindow()
         window.destroy()
 
