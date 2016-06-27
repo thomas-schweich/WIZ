@@ -56,11 +56,11 @@ class Graph:
         self.subplot = sbplt
 
     def show(self):
-        """Sets show to True"""
+        """Sets .show to True"""
         self.show = True
 
     def hide(self):
-        """Sets show to False"""
+        """Sets .show to False"""
         self.show = False
 
     def isShown(self):
@@ -164,7 +164,7 @@ class Graph:
 
         Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values.
         """
-        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+        if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
                          autoScaleMagnitude=self.autoScaleMagnitude)
@@ -175,7 +175,7 @@ class Graph:
         """Adds the y data of two graphs and returns the resulting Graph
 
         Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
-        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+        if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " + " + str(other.title), xLabel=self.xLabel,
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] + other.getRawData()[1],
@@ -187,7 +187,7 @@ class Graph:
         """Multiplies the y data of two graphs and returns the resulting Graph
 
         Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
-        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+        if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " * " + str(other.title), xLabel=self.xLabel,
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] * other.getRawData()[1],
@@ -199,7 +199,7 @@ class Graph:
         """Divides the y data of two graphs and returns the resulting Graph
 
         Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
-        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+        if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " / " + str(other.title), xLabel=self.xLabel,
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] / other.getRawData()[1],
