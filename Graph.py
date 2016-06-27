@@ -52,15 +52,19 @@ class Graph:
         self.yLabel = label
 
     def setSubplot(self, sbplt):
+        """Sets the subplot that should plot this graph by default using plot()"""
         self.subplot = sbplt
 
     def show(self):
+        """Sets show to True"""
         self.show = True
 
     def hide(self):
+        """Sets show to False"""
         self.show = False
 
     def isShown(self):
+        """Returns whether or not this Graph should be displayed"""
         return self.show
 
     def getMagnitudes(self, forceAutoScale=False):
@@ -148,6 +152,7 @@ class Graph:
             self.openWindow()
 
     def openWindow(self):
+        """Opens this Graph's GraphWindow"""
         self.graphWindow.open()
 
     def __repr__(self):
@@ -157,12 +162,51 @@ class Graph:
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.
 
-        Returns a NotImplemented singleton if used on a non-graph object or the data sets are not of the same length.
+        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values.
         """
-        if isinstance(other, Graph) and len(self.getRawData()) == len(other.getRawData()):
+        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
             return Graph(self.window, title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
-
             return NotImplemented
+
+    def __add__(self, other):
+        """Adds the y data of two graphs and returns the resulting Graph
+
+        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
+        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+            return Graph(self.window, title=str(self.title) + " + " + str(other.title), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] + other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+        """Multiplies the y data of two graphs and returns the resulting Graph
+
+        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
+        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+            return Graph(self.window, title=str(self.title) + " * " + str(other.title), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] * other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        else:
+            return NotImplemented
+
+    def __div__(self, other):
+        """Divides the y data of two graphs and returns the resulting Graph
+
+        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
+        if isinstance(other, Graph) and self.getRawData()[0] == other.getRawData[0]:
+            return Graph(self.window, title=str(self.title) + " / " + str(other.title), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] / other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        else:
+            return NotImplemented
+
+    def __len__(self):
+        """Returns the number of x data points in the graph"""
+        return len(self.getRawData()[0])

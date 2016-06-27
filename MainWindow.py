@@ -45,11 +45,13 @@ class MainWindow(Tk.Tk):
         self.generateEQPGraphs()
 
     def _quit(self):
+        """Closes the MainWindow"""
         self.root.quit()
         self.root.destroy()
 
     @staticmethod
     def cleanData(path):
+        """Removes NaNs from the data stored at the path and returns the resulting numpy array"""
         xData, yData = np.loadtxt(path, unpack=True, dtype=float)
         xNans = np.isnan(xData)
         yNans = np.isnan(yData)
@@ -60,6 +62,7 @@ class MainWindow(Tk.Tk):
         return xData, yData
 
     def addGraph(self, graph, parent=None, plot=True):
+        """Adds a graph to this MainWindow's .graphs list, plotting it unless plot is set to false"""
         self.addGraphToAxisList(self.graphs, graph, parent=parent)
         if plot:
             self.plotGraphs()
@@ -67,6 +70,7 @@ class MainWindow(Tk.Tk):
 
     @staticmethod
     def addGraphToAxisList(axisList, graph, parent=None):
+        """Takes a list and adds a graph to it, with location depending on its parent"""
         if not parent:
             axisList.append([graph])
         else:
@@ -76,11 +80,15 @@ class MainWindow(Tk.Tk):
                         if g is parent:
                             axis.append(graph)
 
-    def removeGraph(self, graph):
-        self.graphs.remove(graph)
-        # self.plotGraphs()
+    def removeGraph(self, graph, plot=True):
+        """Removes the graph from the MainWindow's .graphs list, re-plotting unless plot is False"""
+        for axis in self.graphs:
+            if graph in axis:
+                axis.remove(graph)
+        if plot: self.plotGraphs()
 
     def onClick(self, event):
+        """If event.dblclick, calls the MainWindow's promptSelect() method with the axis designated by event.inaxis"""
         if event.dblclick:
             for axis in self.graphs:
                 if event.inaxes is axis[0].subplot:
@@ -88,6 +96,9 @@ class MainWindow(Tk.Tk):
                     return
 
     def promptSelect(self, graphsInAxis):
+        """Creates a window prompting the user to select a graph from the axis if len(graphsInAxis) > 1
+
+        otherwise opens the graph's GraphWindow"""
         if len(graphsInAxis) > 1:
             window = Tk.Toplevel()
             Tk.Label(window, text="Available Graphs on this axis:").pack()
@@ -99,32 +110,12 @@ class MainWindow(Tk.Tk):
 
     @staticmethod
     def openGrWinFromDialogue(graph, window):
+        """Opens graph's GraphWindow and destroys window"""
         graph.openWindow()
         window.destroy()
 
     def plotGraphs(self):
-        '''
-        existingSubGraphs = [graph for graph in self.graphs if graph.show and graph.subplot]
-        graphsToSubplot = [graph for graph in self.graphs if graph.show]
-        self.f.clear()
-        orderedGraphs = []
-        i = 0
-        for gr in graphsToSubplot:
-            preexistingPlot = False
-            for sub in existingSubGraphs:
-                if gr.subplot is sub.subplot and gr is not sub:
-                    childList = []
-                    for x in orderedGraphs:
-                        if sub in x:
-                            childList = x
-                    if len(childList) > 0:
-                        orderedGraphs[orderedGraphs.index(childList)].append(gr)
-                        preexistingPlot = True
-                        i -= 1
-            if not preexistingPlot:
-                orderedGraphs.append([gr])
-            i += 1
-        '''
+        """Plots all graphs in the MainWindows .graphs list, creating a button for each"""
         self.f.clear()
         self.clearButtons()
         graphsToShow = copy(self.graphs)
@@ -147,6 +138,7 @@ class MainWindow(Tk.Tk):
             button.pack(side=Tk.LEFT, fill=Tk.X, expand=1)
 
     def clearButtons(self):
+        """Destroys all buttons in .buttons"""
         for b in self.buttons:
             b.destroy()
         del self.buttons
@@ -161,6 +153,7 @@ class MainWindow(Tk.Tk):
         return a * (np.sin(b * x + c)) + d
 
     def generateEQPGraphs(self):
+        """Sample method for generating default graphs in a chain"""
         xVals, yVals = self.cleanData("BigEQPTest.txt")
         unaltered = self.addGraph(
             Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,

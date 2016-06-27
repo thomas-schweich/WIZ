@@ -1,8 +1,6 @@
 import matplotlib
-
 matplotlib.use('TkAgg')
 import sys
-
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
@@ -23,7 +21,6 @@ class GraphWindow(Tk.Frame):
         self.graph = graph
         self.newGraph = None
         self.newSubPlot = None
-        self.root = self.graph.root
         self.window = None
         self.radioVar = Tk.IntVar()
         self.fitBox = None
@@ -196,28 +193,37 @@ class GraphWindow(Tk.Frame):
         self.canvas.show()
 
     def plotOnThisAxis(self):
+        """Adds the transformation Graph to the axis of this GraphWindow's Graph"""
         self.graph.window.addGraph(self.newGraph, parent=self.graph)
 
     def plotOnNewAxis(self):
+        """Adds the transformation Graph to a new axis in the Graph's MainWindow"""
         self.graph.window.addGraph(self.newGraph)
 
     def quarticFit(self):
+        """Plots a quartic fit of the Graph's data with reference"""
         self.plotWithReference(self.graph.getCurveFit(
             fitFunction=lambda x, a, b, c, d, e: a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + e))
 
     def cubicFit(self):
+        """Plots a cubic fit of the Graph's data with reference"""
         self.plotWithReference(
             self.graph.getCurveFit(fitFunction=lambda x, a, b, c, d: a * x ** 3 + b * x ** 2 + c * x + d))
 
     def quadraticFit(self):
+        """Plots a quadratic fit of the Graph's data with reference"""
         self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b, c: a * x ** 2 + b * x + c))
 
     def linearFit(self):
+        """Plots a linear fit of the Graph's data with reference"""
         self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b: a * x + b))
 
     def addSlice(self, tkVar, begin, end):
+        """Plots a slice of the Graph alone"""
+        # By index
         if tkVar.get() == 0:
             self.plotAlone(self.graph.slice(begin=float(begin), end=float(end)))
+        # By x value
         elif tkVar.get() == 1:
             results = np.searchsorted(self.graph.getRawData()[0], np.array([np.float64(begin), np.float64(end)]))
             self.plotAlone(self.graph.slice(begin=results[0], end=results[1]))
