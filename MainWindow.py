@@ -1,6 +1,6 @@
 import matplotlib
 
-matplotlib.use('TkAgg')
+matplotlib.use("TkAgg")
 import math
 import sys
 
@@ -20,12 +20,15 @@ __author__ = "Thomas Schweich"
 
 
 class MainWindow(Tk.Tk):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, graphs=None, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
+        if not graphs: graphs = []
         plt.style.use("ggplot")
         self.wm_title("Data Manipulation")
-        self.graphs = []
+        self.defaultWidth, self.defaultHeight = self.winfo_screenwidth(), self.winfo_screenheight() * .9
+        self.geometry("%dx%d+0+0" % (self.defaultWidth, self.defaultHeight))
+        self.graphs = graphs
         self.buttons = []
         self.topFrame = Tk.Frame(self)
         self.topFrame.pack(side=Tk.TOP, fill=Tk.X)
@@ -38,7 +41,7 @@ class MainWindow(Tk.Tk):
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-        self.canvas.mpl_connect('button_press_event', self.onClick)
+        self.canvas.mpl_connect("button_press_event", self.onClick)
         self.generateEQPGraphs()
 
     def _quit(self):
@@ -56,22 +59,22 @@ class MainWindow(Tk.Tk):
         yData = yData[notNans]
         return xData, yData
 
-    def addGraph(self, graph, parent=None):
+    def addGraph(self, graph, parent=None, plot=True):
+        self.addGraphToAxisList(self.graphs, graph, parent=parent)
+        if plot:
+            self.plotGraphs()
+        return graph
+
+    @staticmethod
+    def addGraphToAxisList(axisList, graph, parent=None):
         if not parent:
-            self.graphs.append([graph])
-            # self.f.canvas.mpl_connect('button_press_event', graph.onClick)
+            axisList.append([graph])
         else:
-            for axis in self.graphs:
-                print axis
+            for axis in axisList:
                 if len(axis) > 0:
                     for g in axis:
                         if g is parent:
                             axis.append(graph)
-        # self.plotGraphs()
-        # self.f.canvas.mpl_connect('button_press_event', graph.onClick)  # Moving to a single connect which calls all
-        #  graphs in graph list
-        self.plotGraphs()
-        return graph
 
     def removeGraph(self, graph):
         self.graphs.remove(graph)
@@ -134,15 +137,12 @@ class MainWindow(Tk.Tk):
                 graphsToShow.remove(axis)
         length = len(graphsToShow)
         rows = math.ceil(length / 2.0)
-        subplots = []
-        for index in range(0, length):
-            subplots.append(self.f.add_subplot(rows, 2, index + 1))
-
-        for idx, ordered in enumerate(graphsToShow):
-            for g in ordered:
+        subplots = [self.f.add_subplot(rows, 2, index + 1) for index in range(0, length)]
+        for idx, axis in enumerate(graphsToShow):
+            for g in axis:
                 g.setSubplot(subplots[idx])
                 g.plot()
-
+        self.canvas.draw()
         for button in self.buttons:
             button.pack(side=Tk.LEFT, fill=Tk.X, expand=1)
 
@@ -164,16 +164,13 @@ class MainWindow(Tk.Tk):
         xVals, yVals = self.cleanData("BigEQPTest.txt")
         unaltered = self.addGraph(
             Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
-                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self))
-        unaltered.setSubplot(1)
-        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered)
-        fit.setSubplot(1)
-        driftRm = self.addGraph(unaltered - fit)
+                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self), plot=False)
+        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered, plot=False)
+        driftRm = self.addGraph(unaltered - fit, plot=False)
         driftRm.setTitle("Drift Removed")
-        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"))
-        subsection = self.addGraph(unitConverted.slice(begin=60000, end=100000))
-        #self.plotGraphs()
-
+        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"),
+                                      plot=False)
+        self.addGraph(unitConverted.slice(begin=60000, end=100000))
 
 
 if __name__ == "__main__":

@@ -47,8 +47,10 @@ class GraphWindow(Tk.Frame):
 
         Thus only one window per Graph can be open using this method (assuming Graphs only have one GraphWindow)"""
         if not self.isOpen:
+            self.isOpen = True
             self.window = Tk.Toplevel(self)
             self.window.wm_title(str(self.graph.title))
+            self.window.geometry("%dx%d+0+0" % (self.graph.window.winfo_width(), self.graph.window.winfo_height()))
             self.window.protocol("WM_DELETE_WINDOW", self.close)
             self.f = Figure(figsize=(2, 1), dpi=150)
             graphSubPlot = self.f.add_subplot(121)
@@ -89,7 +91,8 @@ class GraphWindow(Tk.Frame):
         """Adds all widgets to the window in their proper frames, with proper cascading"""
         # BASE OPTIONS
         Tk.Label(self.TransformationOptionsFrame, text="Transformation Options").pack(fill=Tk.X)
-        Tk.Button(self.TransformationOptionsFrame, text="Plot on This Axis", command=self.plotOnThisAxis).pack(fill=Tk.X)
+        Tk.Button(self.TransformationOptionsFrame, text="Plot on This Axis", command=self.plotOnThisAxis).pack(
+            fill=Tk.X)
         Tk.Button(self.TransformationOptionsFrame, text="Plot on New Axis", command=self.plotOnNewAxis).pack(fill=Tk.X)
         Tk.Button(self.TransformationOptionsFrame, text="Cancel", command=self.close).pack(fill=Tk.X)
         Tk.Label(self.graphOptionsFrame, text="Graph Options").pack(fill=Tk.X)
@@ -218,4 +221,3 @@ class GraphWindow(Tk.Frame):
         elif tkVar.get() == 1:
             results = np.searchsorted(self.graph.getRawData()[0], np.array([np.float64(begin), np.float64(end)]))
             self.plotAlone(self.graph.slice(begin=results[0], end=results[1]))
-
