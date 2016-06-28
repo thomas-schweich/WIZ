@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from GraphWindow import GraphWindow
+from numbers import Number
 
 __author__ = "Thomas Schweich"
 
@@ -67,6 +68,9 @@ class Graph:
         """Returns whether or not this Graph should be displayed"""
         return self.show
 
+    def getTitle(self):
+        return str(self.title)
+
     def getMagnitudes(self, forceAutoScale=False):
         """Returns the order of 10 magnitude of the data if autoScaleData is set to true
 
@@ -100,7 +104,7 @@ class Graph:
         if scatter:
             (plt if not sub else sub).scatter(xVals, yVals)
         else:
-            (plt if not sub else sub).plot(xVals, yVals)
+            (plt if not sub else sub).plot(xVals, yVals)  # , ",")
         if not sub:
             plt.xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
             plt.ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
@@ -155,6 +159,9 @@ class Graph:
         """Opens this Graph's GraphWindow"""
         self.graphWindow.open()
 
+    def isSameX(self, other):
+        return np.array_equal(self.getRawData()[0], other.getRawData()[0])
+
     def __repr__(self):
         """Returns the Graph's title"""
         return str(self.title)
@@ -162,11 +169,18 @@ class Graph:
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.
 
-        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values.
+        Returns NotImplemented if used on a non-graph,
+         non-number object or the data sets do not have the same x values.
         """
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
-            return Graph(self.window, title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel, yLabel=self.yLabel,
+            return Graph(self.window, title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        elif isinstance(other, Number):
+            return Graph(self.window, title=str(self.title) + " - " + str(other), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] - other,
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
@@ -174,11 +188,17 @@ class Graph:
     def __add__(self, other):
         """Adds the y data of two graphs and returns the resulting Graph
 
-        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
+        Returns NotImplemented if used on a non-graph,
+         non-number object or the data sets do not have the same x values."""
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " + " + str(other.title), xLabel=self.xLabel,
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] + other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        elif isinstance(other, Number):
+            return Graph(self.window, title=str(self.title) + " + " + str(other), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] + other,
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
@@ -186,11 +206,17 @@ class Graph:
     def __mul__(self, other):
         """Multiplies the y data of two graphs and returns the resulting Graph
 
-        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
+        Returns NotImplemented if used on a non-graph,
+         non-number object or the data sets do not have the same x values."""
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " * " + str(other.title), xLabel=self.xLabel,
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] * other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        elif isinstance(other, Number):
+            return Graph(self.window, title=str(self.title) + " * " + str(other), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] * other,
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
@@ -198,11 +224,17 @@ class Graph:
     def __div__(self, other):
         """Divides the y data of two graphs and returns the resulting Graph
 
-        Returns NotImplemented if used on a non-graph object or the data sets do not have the same x values."""
+        Returns NotImplemented if used on a non-graph,
+         non-number object or the data sets do not have the same x values."""
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
             return Graph(self.window, title=str(self.title) + " / " + str(other.title), xLabel=self.xLabel,
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] / other.getRawData()[1],
+                         autoScaleMagnitude=self.autoScaleMagnitude)
+        elif isinstance(other, Number):
+            return Graph(self.window, title=str(self.title) + " / " + str(other), xLabel=self.xLabel,
+                         yLabel=self.yLabel,
+                         rawXData=self.rawXData, rawYData=self.getRawData()[1] / other,
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented

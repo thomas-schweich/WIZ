@@ -52,7 +52,7 @@ class MainWindow(Tk.Tk):
     @staticmethod
     def cleanData(path):
         """Removes NaNs from the data stored at the path and returns the resulting numpy array"""
-        xData, yData = np.loadtxt(path, unpack=True, dtype=float)
+        xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
         xNans = np.isnan(xData)
         yNans = np.isnan(yData)
         nans = np.logical_or(xNans, yNans)
@@ -88,7 +88,7 @@ class MainWindow(Tk.Tk):
         if plot: self.plotGraphs()
 
     def onClick(self, event):
-        """If event.dblclick, calls the MainWindow's promptSelect() method with the axis designated by event.inaxis"""
+        """If event.dblclick, calls promptSelect() with the axis designated by event.inaxis"""
         if event.dblclick:
             for axis in self.graphs:
                 if event.inaxes is axis[0].subplot:
@@ -154,7 +154,7 @@ class MainWindow(Tk.Tk):
 
     def generateEQPGraphs(self):
         """Sample method for generating default graphs in a chain"""
-        xVals, yVals = self.cleanData("BigEQPTest.txt")
+        xVals, yVals = self.cleanData("BigEQPTest.txt")  # "Tyson.FI2.day280.TOR2.txt")
         unaltered = self.addGraph(
             Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                   yLabel="Amplitude (px)", xLabel="Time (s)", root=self), plot=False)

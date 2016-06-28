@@ -1,6 +1,8 @@
 import matplotlib
+
 matplotlib.use('TkAgg')
 import sys
+
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
@@ -81,7 +83,6 @@ class GraphWindow(Tk.Frame):
         del self.widgets
         self.widgets = {}
         self.window.destroy()
-        # self.pack_forget()
         self.isOpen = False
 
     def populate(self):
@@ -131,11 +132,44 @@ class GraphWindow(Tk.Frame):
         self.addBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions,
                                      text="Add/Subtract Graphs", variable=self.radioVar, value=2)
         self.addBox.val = 2
+        self.addWidget(Tk.Label, parent=self.addBox, text="By constant:")
+        addConstant = self.addWidget(Tk.Entry, parent=self.addBox)
+        addConstant.insert(0, "Constant")
+        self.addWidget(Tk.Button, parent=self.addBox, text="Add with constant",
+                       command=lambda: self.addAddition(float(addConstant.get())))
+        graphs = [g for a in self.graph.window.graphs for g in a if g.isSameX(self.graph)]
+        graphTitles = tuple([g.getTitle() for g in graphs])
+        print graphTitles
+        addDropVar = Tk.StringVar()
+        addDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
+        self.addWidget(Tk.Label, parent=self.addBox, text="By Graph:")
+        addDropdown = Tk.OptionMenu(self.optionsFrame, addDropVar, *graphTitles)
+        self.widgets[self.addBox].append(addDropdown)  # Manual addition
+        self.addWidget(Tk.Button, parent=self.addBox, text="Add Graphs",
+                       command=lambda: self.addAddition(graphs[graphTitles.index(addDropVar.get())]))
+        self.addWidget(Tk.Button, parent=self.addBox, text="Subtract Graphs",
+                       command=lambda: self.addSubtraction(graphs[graphTitles.index(addDropVar.get())]))
 
         # MULTIPLY
         self.multBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions,
-                                      text="Multiply/Divide Graphs", variable=self.radioVar, value=3)
+                                      text="Multiply/Divide", variable=self.radioVar, value=3)
         self.multBox.val = 3
+        self.addWidget(Tk.Label, parent=self.multBox, text="By constant:")
+        multConstant = self.addWidget(Tk.Entry, parent=self.multBox)
+        multConstant.insert(0, "Constant")
+        self.addWidget(Tk.Button, parent=self.multBox, text="Multiply with constant",
+                       command=lambda: self.addMultiplication(float(multConstant.get())))
+        multDropVar = Tk.StringVar()
+        multDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
+        self.addWidget(Tk.Label, parent=self.multBox, text="By graph:")
+        multDropdown = Tk.OptionMenu(self.optionsFrame, multDropVar, *graphTitles)
+        self.widgets[self.multBox].append(multDropdown)  # Manual addition
+        self.addWidget(Tk.Button, parent=self.multBox, text="Multiply Graphs",
+                       command=lambda: self.addMultiplication(graphs[graphTitles.index(multDropVar.get())]))
+        self.addWidget(Tk.Button, parent=self.multBox, text="Divide Graphs",
+                       command=lambda: self.addDivision(graphs[graphTitles.index(addDropVar.get())]))
+
+        # TODO Cases without matching graphs?
 
     def refreshOptions(self):
         """Refreshes the displayed options based on the currently selected Radiobutton"""
@@ -215,11 +249,11 @@ class GraphWindow(Tk.Frame):
         self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b, c: a * x ** 2 + b * x + c))
 
     def linearFit(self):
-        """Plots a linear fit of the Graph's data with reference"""
+        """Plots a linear fit of the .graph data with reference"""
         self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b: a * x + b))
 
     def addSlice(self, tkVar, begin, end):
-        """Plots a slice of the Graph alone"""
+        """Plots a slice of .graph alone"""
         # By index
         if tkVar.get() == 0:
             self.plotAlone(self.graph.slice(begin=float(begin), end=float(end)))
@@ -227,3 +261,19 @@ class GraphWindow(Tk.Frame):
         elif tkVar.get() == 1:
             results = np.searchsorted(self.graph.getRawData()[0], np.array([np.float64(begin), np.float64(end)]))
             self.plotAlone(self.graph.slice(begin=results[0], end=results[1]))
+
+    def addAddition(self, val):
+        """Plots a Graph of .graph + val alone"""
+        self.plotAlone(self.graph + val)
+
+    def addSubtraction(self, val):
+        """Plots a Graph of .graph - val alone"""
+        self.plotAlone(self.graph - val)
+
+    def addMultiplication(self, val):
+        """Plots a Graph of .graph * val alone"""
+        self.plotAlone(self.graph * val)
+
+    def addDivision(self, val):
+        """Plots a Graph of .graph / val alone"""
+        self.plotAlone(self.graph / val)
