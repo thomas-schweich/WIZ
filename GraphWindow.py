@@ -143,7 +143,6 @@ class GraphWindow(Tk.Frame):
                        command=lambda: self.addAddition(float(addConstant.get())))
         graphs = [g for a in self.graph.window.graphs for g in a if g.isSameX(self.graph)]
         graphTitles = tuple([g.getTitle() for g in graphs])
-        #print graphTitles
         addDropVar = Tk.StringVar()
         addDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
         self.addWidget(Tk.Label, parent=self.addBox, text="By Graph:")
@@ -209,7 +208,6 @@ class GraphWindow(Tk.Frame):
                 self.widgets[parent].append(wid)
             else:
                 self.widgets[parent] = [wid]
-        print self.widgets[wid if not parent else parent]
         return wid
 
     def plotWithReference(self, graph):
@@ -325,8 +323,7 @@ class GraphWindow(Tk.Frame):
             path = path[:ind] + "(" + str(i) + ")" + path[ind:]
             i += 1
         ftype = path[len(path) - 4:]
-        print ftype
         if ftype == ".npy":
-            np.save(path, np.dstack(self.graph.getRawData())[0])
+            np.save(path, self.graph.getRawData())
         else:
             np.savetxt(path, np.dstack(self.graph.getRawData())[0], delimiter=",")

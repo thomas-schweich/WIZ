@@ -125,7 +125,6 @@ class Graph:
         setXMag, setYMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData(forceAutoScale=True)
         fitParams, fitCoVariances = curve_fit(fitFunction, xVals, yVals)  # , maxfev=100000)
-        # print fitParams
         magAdjustment = forcedYMag - setYMag
         return Graph(self.window, rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
@@ -154,7 +153,6 @@ class Graph:
     def onClick(self, event):
         """Opens this Graph's GraphWindow if the event is within its axes and was a double click"""
         if event.inaxes is self.subplot and event.dblclick:
-            #print str(self.title) + " was clicked."
             self.openWindow()
 
     def openWindow(self):

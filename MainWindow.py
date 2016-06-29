@@ -52,7 +52,11 @@ class MainWindow(Tk.Tk):
     @staticmethod
     def cleanData(path):
         """Removes non-finite values from the data stored at the path and returns the resulting numpy array"""
-        xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
+        ftype = path[len(path) - 4:]
+        if ftype == ".npy":
+            xData, yData = np.load(path)
+        else:
+            xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
         xFinite = np.isfinite(xData)
         yFinite = np.isfinite(yData)
         finitePoints = np.logical_and(xFinite, yFinite)
@@ -156,7 +160,7 @@ class MainWindow(Tk.Tk):
 
     def generateEQPGraphs(self):
         """Sample method for generating default graphs in a chain"""
-        xVals, yVals = self.cleanData("BigEQPTest.txt")  # "Tyson.FI2.day280.TOR2.txt")
+        xVals, yVals = self.cleanData("newFormat.npy")  # "Tyson.FI2.day280.TOR2.txt")
         unaltered = self.addGraph(
             Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                   yLabel="Amplitude (px)", xLabel="Time (s)", root=self), plot=False)
