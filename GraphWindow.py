@@ -7,10 +7,14 @@ if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
     import tkinter as Tk
+import tkFileDialog
 import numpy as np
+import json
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from copy import copy
+import os
 
 __author__ = "Thomas Schweich"
 
@@ -94,9 +98,9 @@ class GraphWindow(Tk.Frame):
         Tk.Button(self.TransformationOptionsFrame, text="Plot on New Axis", command=self.plotOnNewAxis).pack(fill=Tk.X)
         Tk.Button(self.TransformationOptionsFrame, text="Cancel", command=self.close).pack(fill=Tk.X)
         Tk.Label(self.graphOptionsFrame, text="Graph Options").pack(fill=Tk.X)
-        Tk.Button(self.graphOptionsFrame, text="Save Graph").pack(fill=Tk.X)
-        Tk.Button(self.graphOptionsFrame, text="Save Data").pack(fill=Tk.X)
-        Tk.Button(self.graphOptionsFrame, text="Delete Graph").pack(fill=Tk.X)
+        Tk.Button(self.graphOptionsFrame, text="Save Graph", command=self.saveGraph).pack(fill=Tk.X)
+        Tk.Button(self.graphOptionsFrame, text="Save Data", command=self.saveData).pack(fill=Tk.X)
+        Tk.Button(self.graphOptionsFrame, text="Delete Graph", command=self.removeGraph).pack(fill=Tk.X)
         Tk.Checkbutton(self.graphOptionsFrame, text="Show").pack(fill=Tk.X)
 
         # FIT
@@ -139,7 +143,7 @@ class GraphWindow(Tk.Frame):
                        command=lambda: self.addAddition(float(addConstant.get())))
         graphs = [g for a in self.graph.window.graphs for g in a if g.isSameX(self.graph)]
         graphTitles = tuple([g.getTitle() for g in graphs])
-        print graphTitles
+        #print graphTitles
         addDropVar = Tk.StringVar()
         addDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
         self.addWidget(Tk.Label, parent=self.addBox, text="By Graph:")
@@ -229,10 +233,12 @@ class GraphWindow(Tk.Frame):
     def plotOnThisAxis(self):
         """Adds the transformation Graph to the axis of this GraphWindow's Graph"""
         self.graph.window.addGraph(self.newGraph, parent=self.graph)
+        self.close()
 
     def plotOnNewAxis(self):
         """Adds the transformation Graph to a new axis in the Graph's MainWindow"""
         self.graph.window.addGraph(self.newGraph)
+        self.close()
 
     def quarticFit(self):
         """Plots a quartic fit of the Graph's data with reference"""
@@ -277,3 +283,50 @@ class GraphWindow(Tk.Frame):
     def addDivision(self, val):
         """Plots a Graph of .graph / val alone"""
         self.plotAlone(self.graph / val)
+
+    def removeGraph(self):
+        """Removes .graph from its window"""
+        self.graph.window.removeGraph(self.graph)
+        self.close()
+
+    def saveGraph(self):
+        """Saves a pdf of .graph to a user specified directory"""
+        directory = tkFileDialog.askdirectory()
+        fig, ax = plt.subplots()
+        self.graph.plot(subplot=ax)
+        path = tkFileDialog.asksaveasfilename(defaultextension=".pdf",
+                                              filetypes=[("Portable Document Format", ".pdf"),
+                                                         ("Portable Network Graphics", ".png")])
+        i = 1
+        while os.path.isfile(path):
+            startindex = len(path) - 7
+            endindex = len(path) - 4
+            end = path[startindex:endindex]
+            if end == "(" + str(i - 1) + ")":
+                path = path[:startindex] + path[endindex:]
+            ind = len(path) - 4
+            path = path[:ind] + "(" + str(i) + ")" + path[ind:]
+            i += 1
+        fig.savefig(path)
+
+    def saveData(self):
+        #directory = tkFileDialog.askdirectory()
+        path = tkFileDialog.asksaveasfilename(defaultextension=".csv",
+                                              filetypes=[("Comma Separated Values", ".csv"),
+                                                         ("Numpy Array", ".npy")])
+        i = 1
+        while os.path.isfile(path):
+            startindex = len(path) - 7
+            endindex = len(path) - 4
+            end = path[startindex:endindex]
+            if end == "(" + str(i - 1) + ")":
+                path = path[:startindex] + path[endindex:]
+            ind = len(path) - 4
+            path = path[:ind] + "(" + str(i) + ")" + path[ind:]
+            i += 1
+        ftype = path[len(path) - 4:]
+        print ftype
+        if ftype == ".npy":
+            np.save(path, np.dstack(self.graph.getRawData())[0])
+        else:
+            np.savetxt(path, np.dstack(self.graph.getRawData())[0], delimiter=",")

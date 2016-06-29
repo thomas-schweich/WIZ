@@ -1,4 +1,5 @@
 import matplotlib
+
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,8 +11,8 @@ __author__ = "Thomas Schweich"
 
 
 class Graph:
-    def __init__(self, window, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]), xMagnitude=0,
-                 yMagnitude=0, autoScaleMagnitude=False, subplot=None, root=None):
+    def __init__(self, window, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]),
+                 xMagnitude=0, yMagnitude=0, autoScaleMagnitude=False, subplot=None, root=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
         To plot multiple graphs on the same axis, simply refrain from subplotting. A subplot may optionally be specified
@@ -134,7 +135,8 @@ class Graph:
 
     def convertUnits(self, xMultiplier=1, yMultiplier=1, xLabel=None, yLabel=None):
         """Returns a Graph with data multiplied by specified multipliers. Allows setting new labels for units."""
-        return Graph(self.window, title=str(self.title) + " (converted)", xLabel=(self.xLabel if not xLabel else xLabel),
+        return Graph(self.window, title=str(self.title) + " (converted)",
+                     xLabel=(self.xLabel if not xLabel else xLabel),
                      yLabel=(self.yLabel if not yLabel else yLabel),
                      rawXData=self.getRawData()[0] * xMultiplier, rawYData=self.getRawData()[1] * yMultiplier,
                      autoScaleMagnitude=self.autoScaleMagnitude)
@@ -152,7 +154,7 @@ class Graph:
     def onClick(self, event):
         """Opens this Graph's GraphWindow if the event is within its axes and was a double click"""
         if event.inaxes is self.subplot and event.dblclick:
-            print str(self.title) + " was clicked."
+            #print str(self.title) + " was clicked."
             self.openWindow()
 
     def openWindow(self):

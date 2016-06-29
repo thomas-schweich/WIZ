@@ -51,14 +51,13 @@ class MainWindow(Tk.Tk):
 
     @staticmethod
     def cleanData(path):
-        """Removes NaNs from the data stored at the path and returns the resulting numpy array"""
+        """Removes non-finite values from the data stored at the path and returns the resulting numpy array"""
         xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
-        xNans = np.isnan(xData)
-        yNans = np.isnan(yData)
-        nans = np.logical_or(xNans, yNans)
-        notNans = np.logical_not(nans)
-        xData = xData[notNans]
-        yData = yData[notNans]
+        xFinite = np.isfinite(xData)
+        yFinite = np.isfinite(yData)
+        finitePoints = np.logical_and(xFinite, yFinite)
+        xData = xData[finitePoints]
+        yData = yData[finitePoints]
         return xData, yData
 
     def addGraph(self, graph, parent=None, plot=True):
@@ -70,15 +69,18 @@ class MainWindow(Tk.Tk):
 
     @staticmethod
     def addGraphToAxisList(axisList, graph, parent=None):
-        """Takes a list and adds a graph to it, with location depending on its parent"""
-        if not parent:
-            axisList.append([graph])
-        else:
+        """Takes a list and adds a graph to it, adding it to its parent's sub-list if specified
+
+         Each sub-list represents an axis. If a parent is specified but doesn't exist in the list, it is added as though
+          no parent were specified."""
+        if parent:
             for axis in axisList:
                 if len(axis) > 0:
                     for g in axis:
                         if g is parent:
                             axis.append(graph)
+                            return
+        axisList.append([graph])
 
     def removeGraph(self, graph, plot=True):
         """Removes the graph from the MainWindow's .graphs list, re-plotting unless plot is False"""
