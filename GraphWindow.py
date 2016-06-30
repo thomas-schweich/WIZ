@@ -15,6 +15,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from copy import copy
 import os
+import math
 
 __author__ = "Thomas Schweich"
 
@@ -171,8 +172,8 @@ class GraphWindow(Tk.Frame):
                        command=lambda: self.addMultiplication(graphs[graphTitles.index(multDropVar.get())]))
         self.addWidget(Tk.Button, parent=self.multBox, text="Divide Graphs",
                        command=lambda: self.addDivision(graphs[graphTitles.index(addDropVar.get())]))
-
-        # TODO Cases without matching graphs?
+        # TODO Cases with multiple graphs of the same title
+        # TODO Cases without matching graphs
 
     def refreshOptions(self):
         """Refreshes the displayed options based on the currently selected Radiobutton"""
@@ -188,6 +189,7 @@ class GraphWindow(Tk.Frame):
             except AttributeError:
                 for widget in v:
                     widget.pack(side=Tk.BOTTOM, expand=1)
+        # TODO Make more dynamic
 
     def addWidget(self, widgetType, parent=None, *args, **kwargs):
         """Adds a widget to the window.
@@ -288,42 +290,41 @@ class GraphWindow(Tk.Frame):
         self.close()
 
     def saveGraph(self):
-        """Saves a pdf of .graph to a user specified directory"""
-        directory = tkFileDialog.askdirectory()
+        """Saves a pdf, png, or svg of .graph to a user specified directory"""
         fig, ax = plt.subplots()
         self.graph.plot(subplot=ax)
         path = tkFileDialog.asksaveasfilename(defaultextension=".pdf",
                                               filetypes=[("Portable Document Format", ".pdf"),
-                                                         ("Portable Network Graphics", ".png")])
-        i = 1
-        while os.path.isfile(path):
-            startindex = len(path) - 7
-            endindex = len(path) - 4
-            end = path[startindex:endindex]
-            if end == "(" + str(i - 1) + ")":
-                path = path[:startindex] + path[endindex:]
-            ind = len(path) - 4
-            path = path[:ind] + "(" + str(i) + ")" + path[ind:]
-            i += 1
+                                                         ("Portable Network Graphics", ".png"),
+                                                         ("Scalable Vector Graphics", ".svg")])
         fig.savefig(path)
 
     def saveData(self):
-        #directory = tkFileDialog.askdirectory()
+        """Saves a csv or npy of .graph's data to a user specified directory
+
+        If any file extension other than .npy is specified, the data will actually be saved in csv format"""
         path = tkFileDialog.asksaveasfilename(defaultextension=".csv",
                                               filetypes=[("Comma Separated Values", ".csv"),
-                                                         ("Numpy Array", ".npy")])
-        i = 1
-        while os.path.isfile(path):
-            startindex = len(path) - 7
-            endindex = len(path) - 4
-            end = path[startindex:endindex]
-            if end == "(" + str(i - 1) + ")":
-                path = path[:startindex] + path[endindex:]
-            ind = len(path) - 4
-            path = path[:ind] + "(" + str(i) + ")" + path[ind:]
-            i += 1
-        ftype = path[len(path) - 4:]
+                                                         ("NumPy Array", ".npy")])
+        ftype = path[path.rfind("."):]
         if ftype == ".npy":
             np.save(path, self.graph.getRawData())
         else:
             np.savetxt(path, np.dstack(self.graph.getRawData())[0], delimiter=",")
+
+    @staticmethod
+    def avoidDuplicates(path, getExtension=False):
+        i = 1
+        ptIndex = path.rfind(".")
+        while os.path.isfile(path):
+            startindex = ptIndex - (2 + math.ceil(math.log10(i)))
+            end = path[startindex:ptIndex]
+            if end == "(" + str(i - 1) + ")":
+                path = path[:startindex] + path[ptIndex:]
+            path = path[:ptIndex] + "(" + str(i) + ")" + path[ptIndex:]
+            i += 1
+        if getExtension:
+            ftype = path[ptIndex:]
+            return path, ftype
+        else:
+            return path

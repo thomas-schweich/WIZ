@@ -160,7 +160,7 @@ class MainWindow(Tk.Tk):
 
     def generateEQPGraphs(self):
         """Sample method for generating default graphs in a chain"""
-        xVals, yVals = self.cleanData("newFormat.npy")  # "Tyson.FI2.day280.TOR2.txt")
+        xVals, yVals = self.cleanData("Tyson.FI2.day280.TOR2.txt")  # "Tyson.FI2.day280.TOR2.txt")
         unaltered = self.addGraph(
             Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
                   yLabel="Amplitude (px)", xLabel="Time (s)", root=self), plot=False)
