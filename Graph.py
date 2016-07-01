@@ -1,8 +1,8 @@
 import matplotlib
-
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import fft
 from scipy.optimize import curve_fit
 from GraphWindow import GraphWindow
 from numbers import Number
@@ -12,11 +12,11 @@ __author__ = "Thomas Schweich"
 
 class Graph:
     def __init__(self, window, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]),
-                 xMagnitude=0, yMagnitude=0, autoScaleMagnitude=False, subplot=None, root=None):
+                 xMagnitude=0, yMagnitude=0, autoScaleMagnitude=False, subplot=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
-        To plot multiple graphs on the same axis, simply refrain from subplotting. A subplot may optionally be specified
-        when displaying a graph.
+        To plot multiple graphs on the same axis, specify the same subplot. A subplot may optionally be specified
+        when displaying a graph. Without one matplotlib.pyplot.plot() is used directly when plotting.
         Creates a point at (0, 0) by default.
         """
         self.window = window
@@ -29,9 +29,9 @@ class Graph:
         self.yMagnitude = yMagnitude
         self.autoScaleMagnitude = autoScaleMagnitude
         self.subplot = subplot
-        self.root = root
         self.show = True
         self.graphWindow = GraphWindow(self)
+        self.mode = ""
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -72,6 +72,13 @@ class Graph:
     def getTitle(self):
         return str(self.title)
 
+    def setGraphMode(self, mode):
+        """Sets the graphing mode
+
+        Possible options are 'logy', 'logx', 'loglog', and 'scatter'
+        """
+        self.mode = mode
+
     def getMagnitudes(self, forceAutoScale=False):
         """Returns the order of 10 magnitude of the data if autoScaleData is set to true
 
@@ -97,13 +104,20 @@ class Graph:
         xData, yData = self.getRawData()
         return xData / 10 ** xMag, yData / 10 ** yMag
 
-    def plot(self, subplot=None, scatter=False):
+    def plot(self, subplot=None, mode=None):
         """Plots a PyPlot of the graph"""
         xMag, yMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData()
+        if not mode: mode = self.mode
         sub = (self.subplot if not subplot else subplot)
-        if scatter:
+        if mode == "scatter":
             (plt if not sub else sub).scatter(xVals, yVals)
+        elif mode == "logy":
+            (plt if not sub else sub).semilogy(xVals, yVals)
+        elif mode == "logx":
+            (plt if not sub else sub).semilogx(xVals, yVals)
+        elif mode == "loglog":
+            (plt if not sub else sub).loglog(xVals, yVals)
         else:
             (plt if not sub else sub).plot(xVals, yVals)  # , ",")
         if not sub:
@@ -116,8 +130,8 @@ class Graph:
             sub.set_title(str(self.title))
 
     def scatter(self, subplot=None):
-        """Shortcut for scatter=True default in plot()"""
-        self.plot(subplot=subplot, scatter=True)
+        """Shortcut for mode="scatter" default in plot()"""
+        self.plot(subplot=subplot, mode="scatter")
 
     def getCurveFit(self, fitFunction):
         """Returns a Graph of fitFunction with fitted parameters"""
@@ -132,6 +146,31 @@ class Graph:
                      yLabel=self.yLabel)
         # (raw vs. scaled - consult)
 
+    def getFFT(self):
+        """Returns a Graph of the Single-Sided Amplitude Spectrum of y(t)"""
+        x, y = self.getRawData()
+        sampleTime = x[1] - x[0]
+        n = len(y)  # length of the signal
+        k = np.arange(n)
+        T = n * sampleTime
+        frq = k / T  # two sides frequency range
+        frq = frq[range(n / 2)]  # one side frequency range
+        Y = fft(y) / n  # fft computing and normalization
+        Y = Y[range(n / 2)]
+        result = Graph(self.window, rawXData=frq, rawYData=abs(Y), xLabel="Freq (Hz)", yLabel="|Y(freq)|")
+        result.setGraphMode("loglog")
+        return result
+        '''
+        x, y = self.getRawData()
+        interval = x[1] - x[0]
+        sampleFrq = 1.0 / interval
+        totalTime = x[-1] - x[0]
+        frqRes = 1 / totalTime
+        n = len(y)
+        frqVector = [i * frqRes for i in range(n / 2)]
+        yFFT = fft(y)
+        '''
+
     def convertUnits(self, xMultiplier=1, yMultiplier=1, xLabel=None, yLabel=None):
         """Returns a Graph with data multiplied by specified multipliers. Allows setting new labels for units."""
         return Graph(self.window, title=str(self.title) + " (converted)",
@@ -145,7 +184,7 @@ class Graph:
 
         Begin defaults to 0, end to len(data)-1, step to 1.
         """
-        end = len(self.getRawData()[0] - 1) if not end else end
+        end = len(self.getRawData()[0]) - 1 if not end else end
         return Graph(self.window, title=str(self.title) + " from point " + str(int(begin)) + " to " + str(int(end)),
                      xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][begin:end:step],
                      rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)

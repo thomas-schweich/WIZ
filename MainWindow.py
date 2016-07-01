@@ -1,9 +1,7 @@
 import matplotlib
-
 matplotlib.use("TkAgg")
 import math
 import sys
-
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
@@ -11,10 +9,12 @@ else:
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 from Graph import Graph
 from functools import partial
 from copy import copy
+import ttk
 
 __author__ = "Thomas Schweich"
 
@@ -41,28 +41,36 @@ class MainWindow(Tk.Tk):
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-        self.canvas.mpl_connect("button_press_event", self.onClick)
-        self.generateEQPGraphs()
+        self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
+        #self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
 
     def _quit(self):
         """Closes the MainWindow"""
         self.root.quit()
         self.root.destroy()
 
+    def on_key_event(self, event):
+        print('you pressed %s' % event.key)
+        key_press_handler(event, self.canvas, self.toolbar)
+
     @staticmethod
-    def cleanData(path):
-        """Removes non-finite values from the data stored at the path and returns the resulting numpy array"""
-        ftype = path[len(path) - 4:]
+    def loadData(path, clean=True):
+        """Loads data depending on file type, returning the resulting numpy array.
+
+        With clean=True, removes non-finite values from the data stored at the path"""
+        ftype = path[path.rfind("."):]
         if ftype == ".npy":
             xData, yData = np.load(path)
         else:
             xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
-        xFinite = np.isfinite(xData)
-        yFinite = np.isfinite(yData)
-        finitePoints = np.logical_and(xFinite, yFinite)
-        xData = xData[finitePoints]
-        yData = yData[finitePoints]
+        if clean:
+            xFinite = np.isfinite(xData)
+            yFinite = np.isfinite(yData)
+            finitePoints = np.logical_and(xFinite, yFinite)
+            xData = xData[finitePoints]
+            yData = yData[finitePoints]
         return xData, yData
+        # TODO .sac files, HDF5 format
 
     def addGraph(self, graph, parent=None, plot=True):
         """Adds a graph to this MainWindow's .graphs list, plotting it unless plot is set to false"""
@@ -83,8 +91,9 @@ class MainWindow(Tk.Tk):
                     for g in axis:
                         if g is parent:
                             axis.append(graph)
-                            return
+                            return axisList
         axisList.append([graph])
+        return axisList
 
     def removeGraph(self, graph, plot=True):
         """Removes the graph from the MainWindow's .graphs list, re-plotting unless plot is False"""
@@ -121,24 +130,29 @@ class MainWindow(Tk.Tk):
         window.destroy()
 
     def plotGraphs(self):
-        """Plots all graphs in the MainWindows .graphs list, creating a button for each"""
+        """Plots all graphs in the MainWindows .graphs list, creating a button for each which isn't shown"""
         self.f.clear()
         self.clearButtons()
-        graphsToShow = copy(self.graphs)
-        for axis in graphsToShow:
+        for axis in self.graphs:
             for graph in axis:
-                self.buttons.append(Tk.Button(self.buttonFrame, text=str(graph.title), command=graph.openWindow))
                 if not graph.isShown():
-                    axis.remove(graph)
-            if len(axis) < 1:
-                graphsToShow.remove(axis)
-        length = len(graphsToShow)
+                    self.buttons.append(Tk.Button(self.buttonFrame, text=str(graph.title), command=graph.openWindow))
+        axesToShow = []
+        for axis in self.graphs:
+            if len(axis) > 0:
+                for graph in axis:
+                    if graph.isShown():
+                        axesToShow.append(axis)
+                        break
+        length = len(axesToShow)
         rows = math.ceil(length / 2.0)
-        subplots = [self.f.add_subplot(rows, 2, index + 1) for index in range(0, length)]
-        for idx, axis in enumerate(graphsToShow):
+        subplots = [self.f.add_subplot(rows, 1 if length == 1 else 2, index + 1)
+                    for index in range(0, length)]
+        for idx, axis in enumerate(axesToShow):
             for g in axis:
-                g.setSubplot(subplots[idx])
-                g.plot()
+                if g.isShown():
+                    g.setSubplot(subplots[idx])
+                    g.plot()
         self.canvas.draw()
         for button in self.buttons:
             button.pack(side=Tk.LEFT, fill=Tk.X, expand=1)
@@ -158,20 +172,42 @@ class MainWindow(Tk.Tk):
     def sinusoid(x, a, b, c, d):
         return a * (np.sin(b * x + c)) + d
 
-    def generateEQPGraphs(self):
-        """Sample method for generating default graphs in a chain"""
-        xVals, yVals = self.cleanData("Tyson.FI2.day280.TOR2.txt")  # "Tyson.FI2.day280.TOR2.txt")
-        unaltered = self.addGraph(
-            Graph(self, title="Unaltered data", rawXData=xVals, rawYData=yVals, autoScaleMagnitude=False,
-                  yLabel="Amplitude (px)", xLabel="Time (s)", root=self), plot=False)
-        fit = self.addGraph(unaltered.getCurveFit(self.quadratic), parent=unaltered, plot=False)
-        driftRm = self.addGraph(unaltered - fit, plot=False)
-        driftRm.setTitle("Drift Removed")
-        unitConverted = self.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"),
-                                      plot=False)
-        self.addGraph(unitConverted.slice(begin=60000, end=100000))
+
+def generateEQPGraphs(window):
+    """Sample method for generating default graphs in a chain"""
+    xVals, yVals = window.loadData("BigEQPTest.txt")  # "Tyson.FI2.day280.TOR2.txt")
+    unaltered = window.addGraph(
+        Graph(window, title="Unaltered data", rawXData=xVals, rawYData=yVals,
+              yLabel="Amplitude (px)", xLabel="Time (s)"), plot=False)
+    fit = window.addGraph(unaltered.getCurveFit(window.quadratic), parent=unaltered, plot=False)
+    driftRm = window.addGraph(unaltered - fit, plot=False)
+    driftRm.setTitle("Drift Removed")
+    unitConverted = window.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"),
+                                    plot=False)
+    slice = window.addGraph(unitConverted.slice(begin=60000, end=100000))
+    sliceX, sliceY = slice.getRawData()
+    xFourier = np.linspace(sliceX[0], sliceX[-1], num=len(sliceX))
+    sliceAveraged = window.addGraph(Graph(window, title="Averaged Intervals", rawXData=xFourier, rawYData=sliceY))
+    sliceFFT = sliceAveraged.getFFT()
+    sliceFFT.setTitle("FFT")
+    window.addGraph(sliceFFT)
+
+
+def generateFFT(window):
+    # Number of samplepoints
+    N = 600
+    # sample spacing
+    T = 1.0 / 800.0
+    x = np.linspace(0.0, N * T, N)
+    y = np.sin(50.0 * 2.0 * np.pi * x) + 0.5 * np.sin(80.0 * 2.0 * np.pi * x)
+    window.addGraph(Graph(window, title="Original", rawXData=x, rawYData=y))
+    yf = np.fft.fft(y)
+    xf = np.linspace(0.0, 1.0 / (2.0 * T), N / 2)
+    window.addGraph(Graph(window, title="FFT", rawXData=xf, rawYData=2.0 / N * np.abs(yf[:N / 2])))
 
 
 if __name__ == "__main__":
     main = MainWindow()
+    generateEQPGraphs(main)
+    #generateFFT(main)
     main.mainloop()

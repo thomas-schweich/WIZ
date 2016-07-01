@@ -102,7 +102,10 @@ class GraphWindow(Tk.Frame):
         Tk.Button(self.graphOptionsFrame, text="Save Graph", command=self.saveGraph).pack(fill=Tk.X)
         Tk.Button(self.graphOptionsFrame, text="Save Data", command=self.saveData).pack(fill=Tk.X)
         Tk.Button(self.graphOptionsFrame, text="Delete Graph", command=self.removeGraph).pack(fill=Tk.X)
-        Tk.Checkbutton(self.graphOptionsFrame, text="Show").pack(fill=Tk.X)
+        showVal = Tk.IntVar()
+        showVal.set(self.graph.isShown())
+        Tk.Checkbutton(self.graphOptionsFrame, text="Show", variable=showVal, onvalue=1, offvalue=0,
+                       command=lambda: self.showHide(showVal)).pack(fill=Tk.X)
 
         # FIT
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",
@@ -190,6 +193,7 @@ class GraphWindow(Tk.Frame):
                 for widget in v:
                     widget.pack(side=Tk.BOTTOM, expand=1)
         # TODO Make more dynamic
+
 
     def addWidget(self, widgetType, parent=None, *args, **kwargs):
         """Adds a widget to the window.
@@ -311,6 +315,14 @@ class GraphWindow(Tk.Frame):
             np.save(path, self.graph.getRawData())
         else:
             np.savetxt(path, np.dstack(self.graph.getRawData())[0], delimiter=",")
+
+    def showHide(self, checkVal):
+        print checkVal.get()
+        if checkVal.get() == 0:
+            self.graph.show = False
+        if checkVal.get() == 1:
+            self.graph.show = True
+        self.graph.window.plotGraphs()
 
     @staticmethod
     def avoidDuplicates(path, getExtension=False):
