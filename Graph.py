@@ -32,6 +32,7 @@ class Graph:
         self.show = True
         self.graphWindow = GraphWindow(self)
         self.mode = ""
+        # TODO Make .title vs. getTitle() consistent
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -275,6 +276,22 @@ class Graph:
                          yLabel=self.yLabel,
                          rawXData=self.rawXData, rawYData=self.getRawData()[1] / other,
                          autoScaleMagnitude=self.autoScaleMagnitude)
+        else:
+            return NotImplemented
+
+    def __pow__(self, power, modulo=None):
+        """Takes the y data of this Graph to the power of a number, or another graphs's y data, returning the result
+
+        !! Modulo argument not implemented !!"""
+        # TODO Modulo
+        if isinstance(power, Number):
+            return Graph(self.window, title=self.getTitle() + "^" + str(power), xLabel=self.xLabel, yLabel=self.yLabel,
+                         rawXData=self.getRawData()[0],
+                         rawYData=np.square if power == 2 else np.power(self.getRawData()[1], power))
+        elif isinstance(power, Graph):
+            return Graph(self.window, title=self.getTitle() + "^" + power.getTitle(), xLabel=self.xLabel,
+                         yLabel=self.yLabel, rawXData=self.getRawData()[0],
+                         rawYData=np.power(self.getRawData()[1], power.getRawData()[1]))
         else:
             return NotImplemented
 

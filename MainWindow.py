@@ -191,6 +191,13 @@ def generateEQPGraphs(window):
     sliceFFT = sliceAveraged.getFFT()
     sliceFFT.setTitle("FFT")
     window.addGraph(sliceFFT)
+    fftY = sliceFFT.getRawData()[1]
+    sampleFreq = 1 / (fftY[1] - fftY[0])
+    N = len(fftY)
+    # Marvel at this beautiful line of code:
+    convertedFFT = ((sliceFFT / (2 * math.pi) ** 2) / (sampleFreq * N)) ** .5
+    convertedFFT.setGraphMode("loglog")
+    window.addGraph(convertedFFT)
 
 
 def generateFFT(window):
