@@ -194,7 +194,6 @@ class GraphWindow(Tk.Frame):
                     widget.pack(side=Tk.BOTTOM, expand=1)
         # TODO Make more dynamic
 
-
     def addWidget(self, widgetType, parent=None, *args, **kwargs):
         """Adds a widget to the window.
 

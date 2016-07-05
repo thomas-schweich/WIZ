@@ -13,8 +13,7 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 from Graph import Graph
 from functools import partial
-from copy import copy
-import ttk
+import math
 
 __author__ = "Thomas Schweich"
 
@@ -42,7 +41,7 @@ class MainWindow(Tk.Tk):
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
-        #self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
+        # self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
 
     def _quit(self):
         """Closes the MainWindow"""
@@ -100,6 +99,8 @@ class MainWindow(Tk.Tk):
         for axis in self.graphs:
             if graph in axis:
                 axis.remove(graph)
+            if len(axis) < 1:
+                self.graphs.remove(axis)
         if plot: self.plotGraphs()
 
     def onClick(self, event):
@@ -175,7 +176,7 @@ class MainWindow(Tk.Tk):
 
 def generateEQPGraphs(window):
     """Sample method for generating default graphs in a chain"""
-    xVals, yVals = window.loadData("BigEQPTest.txt")  # "Tyson.FI2.day280.TOR2.txt")
+    xVals, yVals = window.loadData("EQPtest_23Nov2015to26Nov2015UTC_part.txt")  # "Tyson.FI2.day280.TOR2.txt")
     unaltered = window.addGraph(
         Graph(window, title="Unaltered data", rawXData=xVals, rawYData=yVals,
               yLabel="Amplitude (px)", xLabel="Time (s)"), plot=False)
@@ -184,37 +185,25 @@ def generateEQPGraphs(window):
     driftRm.setTitle("Drift Removed")
     unitConverted = window.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"),
                                     plot=False)
-    slice = window.addGraph(unitConverted.slice(begin=60000, end=100000))
+    slice = unitConverted
     sliceX, sliceY = slice.getRawData()
     xFourier = np.linspace(sliceX[0], sliceX[-1], num=len(sliceX))
     sliceAveraged = window.addGraph(Graph(window, title="Averaged Intervals", rawXData=xFourier, rawYData=sliceY))
     sliceFFT = sliceAveraged.getFFT()
     sliceFFT.setTitle("FFT")
     window.addGraph(sliceFFT)
+    sliceFFTConverted = window.addGraph(sliceFFT / ((2 * math.pi) ** .5), parent=sliceFFT)
     fftY = sliceFFT.getRawData()[1]
     sampleFreq = 1 / (fftY[1] - fftY[0])
     N = len(fftY)
     # Marvel at this beautiful line of code:
     convertedFFT = ((sliceFFT / (2 * math.pi) ** 2) / (sampleFreq * N)) ** .5
     convertedFFT.setGraphMode("loglog")
+
     window.addGraph(convertedFFT)
-
-
-def generateFFT(window):
-    # Number of samplepoints
-    N = 600
-    # sample spacing
-    T = 1.0 / 800.0
-    x = np.linspace(0.0, N * T, N)
-    y = np.sin(50.0 * 2.0 * np.pi * x) + 0.5 * np.sin(80.0 * 2.0 * np.pi * x)
-    window.addGraph(Graph(window, title="Original", rawXData=x, rawYData=y))
-    yf = np.fft.fft(y)
-    xf = np.linspace(0.0, 1.0 / (2.0 * T), N / 2)
-    window.addGraph(Graph(window, title="FFT", rawXData=xf, rawYData=2.0 / N * np.abs(yf[:N / 2])))
 
 
 if __name__ == "__main__":
     main = MainWindow()
     generateEQPGraphs(main)
-    #generateFFT(main)
     main.mainloop()
