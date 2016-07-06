@@ -15,10 +15,10 @@ from Graph import Graph
 from functools import partial
 import math
 
-__author__ = "Thomas Schweich"
-
 
 class MainWindow(Tk.Tk):
+    __author__ = "Thomas Schweich"
+
     def __init__(self, graphs=None, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)

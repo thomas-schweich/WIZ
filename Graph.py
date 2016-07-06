@@ -7,10 +7,10 @@ from scipy.optimize import curve_fit
 from GraphWindow import GraphWindow
 from numbers import Number
 
-__author__ = "Thomas Schweich"
-
 
 class Graph:
+    __author__ = "Thomas Schweich"
+
     def __init__(self, window, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]),
                  xMagnitude=0, yMagnitude=0, autoScaleMagnitude=False, subplot=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.

@@ -6,6 +6,8 @@ import exceptions
 
 
 class MathExpression:
+    __author__ = "Thomas Schweich"
+
     operators = collections.OrderedDict(
         (("(", None), (")", None), (",", None), ("^", operator.pow), ("/", operator.div), ("*", operator.mul),
          ("+", operator.add), ("-", operator.sub)))

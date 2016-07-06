@@ -17,10 +17,10 @@ from copy import copy
 import os
 import math
 
-__author__ = "Thomas Schweich"
-
 
 class GraphWindow(Tk.Frame):
+    __author__ = "Thomas Schweich"
+
     def __init__(self, graph, *args, **kwargs):
         """A frame object who's open() method creates a Tk.Toplevel (new window) with its contents"""
         Tk.Frame.__init__(self, *args, **kwargs)
