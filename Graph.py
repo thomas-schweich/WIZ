@@ -162,6 +162,7 @@ class Graph:
         result.setGraphMode("loglog")
         return result
         '''
+        # Other attempt at FFT:
         x, y = self.getRawData()
         interval = x[1] - x[0]
         sampleFrq = 1.0 / interval

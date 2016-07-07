@@ -9,7 +9,6 @@ else:
     import tkinter as Tk
 import tkFileDialog
 import numpy as np
-import json
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -106,6 +105,8 @@ class GraphWindow(Tk.Frame):
         showVal.set(self.graph.isShown())
         Tk.Checkbutton(self.graphOptionsFrame, text="Show", variable=showVal, onvalue=1, offvalue=0,
                        command=lambda: self.showHide(showVal)).pack(fill=Tk.X)
+
+        # TODO Implement CUSTOM EXPRESSION
 
         # FIT
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",

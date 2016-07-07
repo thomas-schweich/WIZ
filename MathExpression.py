@@ -2,7 +2,6 @@ import operator
 import collections
 import numpy as np
 import math
-import exceptions
 
 
 class MathExpression:
@@ -39,17 +38,17 @@ class MathExpression:
 
     def evaluateExpression(self, exp):
         if len(exp) >= 3:
-            print "Starting expression: " + str(exp)
+            print "-New Starting expression: %s" % str(exp)
             rightInner = exp.index(")") if ")" in exp else len(exp)
-            print "Right inner: %d" % rightInner
+            print "Right inner parenthesis index: %d" % rightInner
             leftSide = exp[:rightInner]
             leftInner = len(leftSide) - leftSide[::-1].index("(") if "(" in leftSide else 0
-            print "Left inner: %d" % leftInner
+            print "Left inner parenthesis index: %d" % leftInner
             subExp = leftSide[leftInner:]
             print "Sub Expression: " + str(subExp)
             callerIndex = leftInner - 2
             if callerIndex > -1 and exp[callerIndex] not in self.operators:
-                print "Calling function..................................."
+                print "Calling function...."
                 # Call function if in format something(arg0, arg1...) if "something" is not an operator
                 args = []
                 while "," in subExp:
@@ -59,14 +58,12 @@ class MathExpression:
                 print "Arguments: " + str(args)
                 result = self._interpret(exp[callerIndex])(*args)
                 print "Result: " + str(result)
-                print "Expression before deletion" + str(exp)
                 del exp[callerIndex:rightInner + 1]
-                print "Expression after deletion" + str(exp)
                 exp.insert(callerIndex, result)
-                print "Expression after insertion" + str(exp)
+                print "Expression after replacement" + str(exp)
                 print "....call complete"
             else:
-                print "Evaluating expression.................................."
+                print "Evaluating expression...."
                 # Otherwise, evaluate the expression within the parenthesis, replacing the range with the result
                 newExp = subExp[:]
                 for op in self.operators:
@@ -89,18 +86,16 @@ class MathExpression:
                     raise MathExpression.SyntaxError(exp)
                 if len(newExp) == 1:
                     if hasParens:
-                        print "Parens found"
+                        print "Replacing parenthesis and expression"
                         del exp[leftInner - 1:rightInner + 1]
                     else:
-                        print "Left inner: %s Right inner: %s" % (leftInner, rightInner)
+                        print "Replacing expression only (parenthesis not found)"
                         del exp[leftInner:rightInner]
-                    print "After deletion: %s" % str(exp)
                     exp.insert(leftInner-1, newExp[0]) # -1s
-                    print "After insertion: %s" % str(exp)
                 else:
                     raise MathExpression.SyntaxError(newExp)
                 print "New Expression: %s" % str(exp)
-                print "...evaluate complete"
+                print "....evaluate complete"
             print "Length of expression: %d" % len(exp)
             return self.evaluateExpression(exp)
         else:

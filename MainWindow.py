@@ -203,7 +203,22 @@ def generateEQPGraphs(window):
     window.addGraph(convertedFFT)
 
 
+def generateTestGraphs(window):
+    """Sample method for generating default graphs in a chain"""
+    xVals, yVals = window.loadData("EQPtest_23Nov2015to26Nov2015UTC_part.txt")  # "Tyson.FI2.day280.TOR2.txt")
+    unaltered = window.addGraph(
+        Graph(window, title="Unaltered data", rawXData=xVals, rawYData=yVals,
+              yLabel="Amplitude (px)", xLabel="Time (s)"), plot=False)
+    fit = window.addGraph(unaltered.getCurveFit(window.quadratic), parent=unaltered, plot=False)
+    driftRm = window.addGraph(unaltered - fit, plot=False)
+    driftRm.setTitle("Drift Removed")
+    unitConverted = window.addGraph(driftRm.convertUnits(yMultiplier=1.0 / 142857.0, yLabel="Position (rad)"),
+                                    plot=False)
+    window.addGraph(unitConverted.slice(0, 1000))
+
+
 if __name__ == "__main__":
     main = MainWindow()
-    generateEQPGraphs(main)
+    #generateEQPGraphs(main)
+    generateTestGraphs(main)
     main.mainloop()
