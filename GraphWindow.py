@@ -349,7 +349,7 @@ class GraphWindow(Tk.Frame):
             for graph in axis:
                 graphVars[graph.getTitle()] = graph
         print graphVars
-        exp = MathExpression(str(expression), variables=graphVars)
+        exp = MathExpression(str(expression), variables=graphVars, fallbackFunc=self.graph.useYForCall)
         graph = exp.evaluate()
         self.plotAlone(graph)
 

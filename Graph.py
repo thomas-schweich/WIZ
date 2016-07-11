@@ -6,6 +6,7 @@ from scipy import fft
 from scipy.optimize import curve_fit
 from GraphWindow import GraphWindow
 from numbers import Number
+from MathExpression import MathExpression
 
 
 class Graph:
@@ -261,6 +262,23 @@ class Graph:
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
+
+    @staticmethod
+    def useYForCall(function, *args):
+        newArgs = list(args[:])
+        graph = None
+        for index, arg in enumerate(newArgs):
+            try:
+                newArgs[index] = arg.getRawData()[1]
+            except AttributeError:
+                pass
+            else:
+                graph = args[index]
+        try:
+            graph.setRawData((graph.getRawData()[0], function(*newArgs)))
+            return graph
+        except AttributeError as a:
+            raise MathExpression.ParseFailure(str(graph), a)
 
     def __div__(self, other):
         """Divides the y data of two graphs and returns the resulting Graph

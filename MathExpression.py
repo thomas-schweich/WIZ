@@ -17,17 +17,18 @@ class MathExpression:
          ("*", operator.mul), ("+", operator.add), ("-", operator.sub)))
     modules = (np, math)
 
-    def __init__(self, expression, variables=None, operators=operators, modules=modules):
+    def __init__(self, expression, variables=None, operators=operators, modules=modules, fallbackFunc=None):
         self.variables = variables
         self.operators = operators
         self.modules = modules
+        self.fallbackFunc = fallbackFunc
         self.expression = self.genFromString(expression)
         self.loops = 0
 
     def genFromString(self, string):
         operators = self.operators.keys()
         operators.sort(key=lambda x: -len(x))
-        exp = re.findall(r'<.*>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|\w+', string)
+        exp = re.findall(r'<.*?>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|\w+', string)
         print exp
         return exp
 
@@ -52,11 +53,18 @@ class MathExpression:
                 # Call function if in format something(arg0, arg1...) if "something" is not an operator
                 args = []
                 while "," in subExp:
-                    args.append(self.evaluateExpression(subExp[:subExp.index(",")]))
+                    args.append(self.evaluateExpression(list(subExp[:subExp.index(",")])))
                     del subExp[:subExp.index(",") + 1]
                 args.append(self.evaluateExpression(subExp))
                 print "Arguments: " + str(args)
-                result = self._interpret(exp[callerIndex])(*args)
+                funcToCall = self._interpret(exp[callerIndex])
+                try:
+                    result = funcToCall(*args)
+                except:
+                    try:
+                        result = self.fallbackFunc(funcToCall, *args)
+                    except Exception as e:
+                        raise MathExpression.ParseFailure(str(funcToCall), e)
                 print "Result: " + str(result)
                 del exp[callerIndex:rightInner + 1]
                 exp.insert(callerIndex, result)
