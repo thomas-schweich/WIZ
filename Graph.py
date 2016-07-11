@@ -288,7 +288,7 @@ class Graph:
         if isinstance(power, Number):
             return Graph(self.window, title=self.getTitle() + "^" + str(power), xLabel=self.xLabel, yLabel=self.yLabel,
                          rawXData=self.getRawData()[0],
-                         rawYData=np.square if power == 2 else np.power(self.getRawData()[1], power))
+                         rawYData=np.square(self.getRawData()[1]) if power == 2 else np.power(self.getRawData()[1], power))
         elif isinstance(power, Graph) and np.array_equal(self.getRawData()[0], power.getRawData()[0]):
             return Graph(self.window, title=self.getTitle() + "^" + power.getTitle(), xLabel=self.xLabel,
                          yLabel=self.yLabel, rawXData=self.getRawData()[0],

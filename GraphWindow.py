@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from copy import copy
+from MathExpression import MathExpression
 import os
 import math
 
@@ -33,6 +34,7 @@ class GraphWindow(Tk.Frame):
         self.sliceBox = None
         self.addBox = None
         self.multBox = None
+        self.customBox = None
         self.canvas = None
         self.f = None
         self.baseGroup = None
@@ -106,8 +108,6 @@ class GraphWindow(Tk.Frame):
         Tk.Checkbutton(self.graphOptionsFrame, text="Show", variable=showVal, onvalue=1, offvalue=0,
                        command=lambda: self.showHide(showVal)).pack(fill=Tk.X)
 
-        # TODO Implement CUSTOM EXPRESSION
-
         # FIT
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",
                                      variable=self.radioVar, value=0)
@@ -146,17 +146,18 @@ class GraphWindow(Tk.Frame):
         addConstant.insert(0, "Constant")
         self.addWidget(Tk.Button, parent=self.addBox, text="Add with constant",
                        command=lambda: self.addAddition(float(addConstant.get())))
-        graphs = [g for a in self.graph.window.graphs for g in a if g.isSameX(self.graph)]
-        graphTitles = tuple([g.getTitle() for g in graphs])
+        graphs = [g for a in self.graph.window.graphs for g in a]
+        sameXGraphs = [g for g in graphs if g.isSameX(self.graph)]
+        graphTitles = tuple([g.getTitle() for g in sameXGraphs])
         addDropVar = Tk.StringVar()
         addDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
         self.addWidget(Tk.Label, parent=self.addBox, text="By Graph:")
         addDropdown = Tk.OptionMenu(self.optionsFrame, addDropVar, *graphTitles)
         self.widgets[self.addBox].append(addDropdown)  # Manual addition
         self.addWidget(Tk.Button, parent=self.addBox, text="Add Graphs",
-                       command=lambda: self.addAddition(graphs[graphTitles.index(addDropVar.get())]))
+                       command=lambda: self.addAddition(sameXGraphs[graphTitles.index(addDropVar.get())]))
         self.addWidget(Tk.Button, parent=self.addBox, text="Subtract Graphs",
-                       command=lambda: self.addSubtraction(graphs[graphTitles.index(addDropVar.get())]))
+                       command=lambda: self.addSubtraction(sameXGraphs[graphTitles.index(addDropVar.get())]))
 
         # MULTIPLY
         self.multBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions,
@@ -173,9 +174,27 @@ class GraphWindow(Tk.Frame):
         multDropdown = Tk.OptionMenu(self.optionsFrame, multDropVar, *graphTitles)
         self.widgets[self.multBox].append(multDropdown)  # Manual addition
         self.addWidget(Tk.Button, parent=self.multBox, text="Multiply Graphs",
-                       command=lambda: self.addMultiplication(graphs[graphTitles.index(multDropVar.get())]))
+                       command=lambda: self.addMultiplication(sameXGraphs[graphTitles.index(multDropVar.get())]))
         self.addWidget(Tk.Button, parent=self.multBox, text="Divide Graphs",
-                       command=lambda: self.addDivision(graphs[graphTitles.index(addDropVar.get())]))
+                       command=lambda: self.addDivision(sameXGraphs[graphTitles.index(addDropVar.get())]))
+
+        # CUSTOM EXPRESSION
+        self.customBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Custom Expression",
+                                        variable=self.radioVar, value=4)
+        self.customBox.val = 4
+
+        customGraphTitles = tuple([g.getTitle() for g in graphs])
+        textBox = self.addWidget(Tk.Text, parent=self.customBox, font=("Times", 15))
+        textBox.insert(Tk.END, "<%s>" % str(self.graph.getTitle()))
+        customDropVar = Tk.StringVar()
+        customDropVar.set(customGraphTitles[0] if len(customGraphTitles) > 0 else "")
+        self.addWidget(Tk.Label, parent=self.customBox, text="Reference y-data of graph:")
+        customDropdown = Tk.OptionMenu(self.optionsFrame, customDropVar, *customGraphTitles, command=lambda name:
+                       textBox.insert(Tk.INSERT, "<%s>" % str(customGraphTitles[customGraphTitles.index(name)])))
+        self.widgets[self.customBox].append(customDropdown)  # Manual addition
+        self.addWidget(Tk.Button, parent=self.customBox, text="Parse",
+                       command=lambda: self.parseExpression(textBox.get(1.0, Tk.END)))
+
         # TODO Cases with multiple graphs of the same title
         # TODO Cases without matching graphs
 
@@ -323,6 +342,16 @@ class GraphWindow(Tk.Frame):
         if checkVal.get() == 1:
             self.graph.show = True
         self.graph.window.plotGraphs()
+
+    def parseExpression(self, expression):
+        graphVars = {}
+        for axis in self.graph.window.graphs:
+            for graph in axis:
+                graphVars[graph.getTitle()] = graph
+        print graphVars
+        exp = MathExpression(str(expression), variables=graphVars)
+        graph = exp.evaluate()
+        self.plotAlone(graph)
 
     @staticmethod
     def avoidDuplicates(path, getExtension=False):

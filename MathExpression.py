@@ -2,14 +2,19 @@ import operator
 import collections
 import numpy as np
 import math
+import re
 
 
 class MathExpression:
     __author__ = "Thomas Schweich"
 
+    @staticmethod
+    def returnDict(key, value):
+        return {key: value}
+
     operators = collections.OrderedDict(
-        (("(", None), (")", None), (",", None), ("^", operator.pow), ("/", operator.div), ("*", operator.mul),
-         ("+", operator.add), ("-", operator.sub)))
+        (("(", None), (")", None), (",", None), ("^", operator.pow), ("/", operator.div),
+         ("*", operator.mul), ("+", operator.add), ("-", operator.sub)))
     modules = (np, math)
 
     def __init__(self, expression, variables=None, operators=operators, modules=modules):
@@ -17,19 +22,14 @@ class MathExpression:
         self.operators = operators
         self.modules = modules
         self.expression = self.genFromString(expression)
+        self.loops = 0
 
     def genFromString(self, string):
-        string = "(" + string + ")"
-        string = "".join(string.split())
-        expressionList = []
-        lastOpIndex = 0
-        for index, char in enumerate(string):
-            if char in self.operators:
-                if index != lastOpIndex: expressionList.append(string[lastOpIndex:index])
-                expressionList.append(char)
-                lastOpIndex = index + 1
-        print expressionList
-        return expressionList
+        operators = self.operators.keys()
+        operators.sort(key=lambda x: -len(x))
+        exp = re.findall(r'<.*?>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|\w+', string)
+        print exp
+        return exp
 
     def evaluate(self):
         ev = self.evaluateExpression(self.expression)
@@ -68,8 +68,10 @@ class MathExpression:
                 newExp = subExp[:]
                 for op in self.operators:
                     for index, part in enumerate(subExp):
+                        self.loops += 1
                         if part == op:
                             newLocation = newExp.index(part)
+                            # ^ Check - Should be ok though since previous operators are removed
                             prevIndex = newLocation - 1
                             nextIndex = newLocation + 1
                             prev = self._interpret(newExp[prevIndex])
@@ -100,6 +102,8 @@ class MathExpression:
             return self.evaluateExpression(exp)
         else:
             if len(exp) == 1:
+                print "Loops: %d" % self.loops
+                self.loops = 0
                 return self._interpret(exp[0])
             else:
                 raise MathExpression.SyntaxError(exp)
@@ -107,9 +111,9 @@ class MathExpression:
     def _interpret(self, string):
         if isinstance(string, str):
             if string[0] == "<" and string[-1] == ">":
-                varString = string[1:len(string) - 1]
+                varString = string[1:-1]
                 try:
-                    print "Trying interpret %s as variable" % string
+                    print "Trying interpret %s as variable" % varString
                     return self.variables[varString]
                 except KeyError as k:
                     raise MathExpression.ParseFailure(string, k)
@@ -125,10 +129,19 @@ class MathExpression:
                         return getattr(module, string)
                     except AttributeError:
                         pass
-                #if string in self.operators:
                 raise MathExpression.ParseFailure(string, AttributeError)
+                # return string
+            # TODO Fallback function (pass function as first arg...)
         else:
             return string
+
+    '''
+    def operate(self, operator_, *args):
+        # TODO Dict kwargs
+        kwargs = [self._interpret(arg) for arg in args if isinstance(arg, dict)]
+        args = [self._interpret(arg) for arg in args if not isinstance(arg, dict)]
+        return operator_(*args, **kwargs)
+    '''
 
     class ParseFailure(Exception):
         def __init__(self, badPart, exception):
