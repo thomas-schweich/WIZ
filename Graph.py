@@ -204,6 +204,24 @@ class Graph:
     def isSameX(self, other):
         return np.array_equal(self.getRawData()[0], other.getRawData()[0])
 
+    @staticmethod
+    def useYForCall(function, *args):
+        newArgs = list(args[:])
+        graph = None
+        for index, arg in enumerate(newArgs):
+            try:
+                newArgs[index] = arg.getRawData()[1]
+            except AttributeError:
+                pass
+            else:
+                if len(args[index].getRawData()[0]) > len(graph.getRawData[0]):
+                    graph = args[index]
+        try:
+            graph.setRawData((graph.getRawData()[0], function(*newArgs)))
+            return graph
+        except AttributeError as a:
+            raise MathExpression.ParseFailure(str(graph), a)
+
     def __repr__(self):
         """Returns the Graph's title"""
         return str(self.title)
@@ -262,23 +280,6 @@ class Graph:
                          autoScaleMagnitude=self.autoScaleMagnitude)
         else:
             return NotImplemented
-
-    @staticmethod
-    def useYForCall(function, *args):
-        newArgs = list(args[:])
-        graph = None
-        for index, arg in enumerate(newArgs):
-            try:
-                newArgs[index] = arg.getRawData()[1]
-            except AttributeError:
-                pass
-            else:
-                graph = args[index]
-        try:
-            graph.setRawData((graph.getRawData()[0], function(*newArgs)))
-            return graph
-        except AttributeError as a:
-            raise MathExpression.ParseFailure(str(graph), a)
 
     def __div__(self, other):
         """Divides the y data of two graphs and returns the resulting Graph
