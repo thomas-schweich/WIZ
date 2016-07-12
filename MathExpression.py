@@ -77,7 +77,7 @@ class MathExpression:
                 for op in self.operators:
                     for index, part in enumerate(subExp):
                         self.loops += 1
-                        if part == op:
+                        if part == op:  # Changing to allow for equal level operators
                             newLocation = newExp.index(part)
                             # ^ Check - Should be ok though since previous operators are removed
                             prevIndex = newLocation - 1

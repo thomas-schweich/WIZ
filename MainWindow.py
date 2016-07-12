@@ -13,7 +13,9 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 from Graph import Graph
 from functools import partial
+import tkFileDialog
 import math
+import cPickle as pickle
 
 
 class MainWindow(Tk.Tk):
@@ -33,6 +35,10 @@ class MainWindow(Tk.Tk):
         self.topFrame.pack(side=Tk.TOP, fill=Tk.X)
         self.buttonFrame = Tk.Frame(self.topFrame)
         self.buttonFrame.pack(side=Tk.TOP, expand=1, fill=Tk.X)
+        self.bottomFrame = Tk.Frame(self)
+        self.bottomFrame.pack(side=Tk.BOTTOM)
+        self.saveButton = Tk.Button(self.bottomFrame, text="Save", command=self.saveProject)
+        self.saveButton.pack()
         self.f = Figure(figsize=(5, 4), dpi=150)
         self.canvas = FigureCanvasTkAgg(self.f, master=self)
         self.canvas.show()
@@ -41,12 +47,35 @@ class MainWindow(Tk.Tk):
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
+        self.plotGraphs()
         # self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
 
     def _quit(self):
         """Closes the MainWindow"""
         self.root.quit()
         self.root.destroy()
+
+    def saveProject(self):
+        """Saves this window's graphs and """
+        path = tkFileDialog.asksaveasfilename(defaultextension=".npz",
+                                              filetypes=[("Numpy", ".npz")])
+        #with open(path, "a+") as p:
+        rawdata = []
+        metadata = []
+        for i, axis in enumerate(self.graphs):
+            rawdata.append([])
+            metadata.append([])
+            for j, graph in enumerate(axis):
+                rawdata[i].append([])
+                metadata[i].append([])
+                rawdata[i][j] = graph.getRawData()
+                metadata[i][j] = graph.getMetaData()
+        print "Length of raw data %d" % len(rawdata), metadata
+        #rawdata = np.array([graph.getRawData() for axis in self.graphs for graph in axis])
+        #metadata = np.array([graph.getMetaData() for axis in self.graphs for graph in axis])
+        #print metadata
+        np.savez(path, np.array(rawdata), np.array(metadata))
+            #pickle.dump(metadata, p)
 
     def on_key_event(self, event):
         print('you pressed %s' % event.key)

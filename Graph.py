@@ -12,7 +12,7 @@ from MathExpression import MathExpression
 class Graph:
     __author__ = "Thomas Schweich"
 
-    def __init__(self, window, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]),
+    def __init__(self, window=None, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]),
                  xMagnitude=0, yMagnitude=0, autoScaleMagnitude=False, subplot=None):
         """Creates a Graph of specified data including a wide variety of methods for manipulating the data.
 
@@ -34,6 +34,30 @@ class Graph:
         self.graphWindow = GraphWindow(self)
         self.mode = ""
         # TODO Make .title vs. getTitle() consistent
+
+    '''
+    def getMetaData(self):
+        """Returns a dict of all data about the graph other than the raw data it uses"""
+        return {
+            "window": self.window,
+            "title": self.title,
+            "xLabel": self.xLabel,
+            "yLabel": self.yLabel,
+            "xMagnitude": self.xMagnitude,
+            "yMagnitude": self.yMagnitude,
+            "autoScaleMagnitude": self.autoScaleMagnitude,
+            "subplot": self.subplot,
+            "show": self.show,
+            "graphWindow": self.graphWindow,
+            "mode": self.mode
+        }
+    '''
+
+    def getMetaData(self):
+        """Returns a dict of all class data which is not a function and not a numpy array"""
+        return {key: value for key, value in self.__dict__.items() if not key.startswith("__") and
+                not callable(key) and not (key == "rawXData" or key == "rawYData" or key == "graphWindow" or
+                                           key == "window" or key == "subplot")}
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
