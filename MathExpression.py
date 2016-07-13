@@ -6,6 +6,20 @@ import re
 
 
 class MathExpression:
+    """A parser for mathematical expressions. Does not depend on any other modules in dataManipulation.
+
+    Allows the specification of a list of operators which are used to break down a string, and which are assigned to a
+    function which takes exactly two arguments through an OrderedDict. Interpretation is done on *every* part of the
+    expression, thus making it impossible to execute arbitrary code. In order to maintain "safety," the input must
+    be a single string. Parsing is completed in groups of 3 in the format token + operator + token. This is done
+    iteratively. Expressions are recursively broken into sub-expressions through
+    the use of matching parenthesis, and evaluated from the inside out.
+    Function calls are evaluated in the format func(arg0, arg1...). Kwargs are not supported. A
+    backup function in the format  backup(func, *args) can be specified to handle arguments which are passed to a
+    function but are of improper type; for instance, using only the first index of an array as arguments
+    for certain functions, etc.
+    """
+
     __author__ = "Thomas Schweich"
 
     @staticmethod
@@ -26,6 +40,7 @@ class MathExpression:
         self.loops = 0
 
     def genFromString(self, string):
+        """Separates string by .operators using regex"""
         operators = self.operators.keys()
         operators.sort(key=lambda x: -len(x))
         exp = re.findall(r'<.*?>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|\w+', string)
@@ -33,11 +48,18 @@ class MathExpression:
         return exp
 
     def evaluate(self):
+        """Calls evaluateExpression() on .expression"""
         ev = self.evaluateExpression(self.expression)
         print ev
         return ev
 
     def evaluateExpression(self, exp):
+        """Recursively evaluates expressions starting with innermost parenthesis, working outwards
+
+        Iteratively solves sub-expressions (grouped by parenthesis) in the order of .operators
+        Note: Order of operations is strict. Equal precedence not yet allowed.
+        """
+        # TODO Equal operator precedence
         if len(exp) >= 3:
             print "-New Starting expression: %s" % str(exp)
             rightInner = exp.index(")") if ")" in exp else len(exp)
@@ -137,9 +159,8 @@ class MathExpression:
                         return getattr(module, string)
                     except AttributeError:
                         pass
-                raise MathExpression.ParseFailure(string, AttributeError)
+                raise MathExpression.SyntaxError(string)
                 # return string
-            # TODO Fallback function (pass function as first arg...)
         else:
             return string
 
@@ -152,6 +173,7 @@ class MathExpression:
     '''
 
     class ParseFailure(Exception):
+        """Represents the expression group (i.e. token + operator + token) and the given exception"""
         def __init__(self, badPart, exception):
             self.badPart = badPart
             self.exception = exception
@@ -168,6 +190,7 @@ class MathExpression:
             return self.__repr__()
 
     class SyntaxError(Exception):
+        """Represents only the expression group (i.e. token + operator + token)"""
         def __init__(self, badPart):
             self.badPart = badPart
 

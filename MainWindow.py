@@ -26,7 +26,7 @@ class MainWindow(Tk.Tk):
         Tk.Tk.__init__(self, *args, **kwargs)
         if not graphs: graphs = []
         plt.style.use("ggplot")
-        self.wm_title("Data Manipulation")
+        self.wm_title("GEE Data Manipulator")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth(), self.winfo_screenheight() * .9
         self.geometry("%dx%d+0+0" % (self.defaultWidth, self.defaultHeight))
         self.graphs = graphs
@@ -47,13 +47,16 @@ class MainWindow(Tk.Tk):
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
-        self.plotGraphs()
         # self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
 
     def _quit(self):
         """Closes the MainWindow"""
         self.root.quit()
         self.root.destroy()
+
+    def setGraphs(self, graphs):
+        """Sets this window's list of graphs"""
+        self.graphs = graphs
 
     def saveProject(self):
         """Saves this window's graphs and """
@@ -71,11 +74,33 @@ class MainWindow(Tk.Tk):
                 rawdata[i][j] = graph.getRawData()
                 metadata[i][j] = graph.getMetaData()
         print "Length of raw data %d" % len(rawdata), metadata
-        #rawdata = np.array([graph.getRawData() for axis in self.graphs for graph in axis])
-        #metadata = np.array([graph.getMetaData() for axis in self.graphs for graph in axis])
-        #print metadata
         np.savez(path, np.array(rawdata), np.array(metadata))
-            #pickle.dump(metadata, p)
+
+    @staticmethod
+    def loadProject(path):
+        """Loads the .npz file at path and creates a MainWindow with the data plotted
+
+        The .npz file must be in the format
+        npz["arr_0"] = 2d array of graph data grouped by axis
+        and npz["arr_1"] = associated metadata in dicts at corresponding indices
+        """
+        b = np.load(path)
+        rawData, metaData = b["arr_0"], b["arr_1"]
+        print metaData
+        graphs = []
+        window = MainWindow()
+        for i in range(len(rawData)):
+            graphs.append([])
+            for j in range(len(rawData[i])):
+                gr = Graph()
+                gr.setRawData(rawData[i][j])
+                gr.window = window
+                for att in metaData[i][j]:
+                    setattr(gr, att, metaData[i][j][att])
+                graphs[i].append(gr)
+        window.setGraphs(graphs)
+        window.plotGraphs()
+        window.mainloop()
 
     def on_key_event(self, event):
         print('you pressed %s' % event.key)

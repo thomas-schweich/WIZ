@@ -19,6 +19,11 @@ import math
 
 
 class GraphWindow(Tk.Frame):
+    """Tk.Frame child which hooks into a Graph to provide it modification options
+
+    A Tk.Toplevel instance is created when open() is called. Only one per GraphWindow instance is allowed at a time.
+    """
+
     __author__ = "Thomas Schweich"
 
     def __init__(self, graph, *args, **kwargs):
