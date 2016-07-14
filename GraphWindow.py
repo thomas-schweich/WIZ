@@ -16,6 +16,7 @@ from copy import copy
 from MathExpression import MathExpression
 import os
 import math
+import Graph
 
 
 class GraphWindow(Tk.Frame):
@@ -354,7 +355,7 @@ class GraphWindow(Tk.Frame):
             for graph in axis:
                 graphVars[graph.getTitle()] = graph
         print graphVars
-        exp = MathExpression(str(expression), variables=graphVars, fallbackFunc=self.graph.useYForCall)
+        exp = MathExpression(str(expression), modules=(Graph, np, math), variables=graphVars, fallbackFunc=self.graph.useYForCall)
         graph = exp.evaluate()
         self.plotAlone(graph)
 

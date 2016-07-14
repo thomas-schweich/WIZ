@@ -34,6 +34,7 @@ class Graph:
         self.graphWindow = GraphWindow(self)
         self.mode = ""
         # TODO Make .title vs. getTitle() consistent
+        # TODO xData and yData functions
 
     '''
     def getMetaData(self):
@@ -238,7 +239,10 @@ class Graph:
             except AttributeError:
                 pass
             else:
-                if len(args[index].getRawData()[0]) > len(graph.getRawData[0]):
+                if graph:
+                    if len(args[index].getRawData()[0]) > len(graph.getRawData()[0]):
+                        graph = args[index]
+                else:
                     graph = args[index]
         try:
             graph.setRawData((graph.getRawData()[0], function(*newArgs)))
@@ -342,3 +346,24 @@ class Graph:
     def __len__(self):
         """Returns the number of x data points in the graph"""
         return len(self.getRawData()[0])
+
+
+def x(graph, index=None):
+    if index:
+        return graph.getRawData()[0][index]
+    else:
+        return graph.getRawData()[0]
+
+
+def y(graph, index=None):
+    if index:
+        return graph.getRawData()[1][index]
+    else:
+        return graph.getRawData()[1]
+
+
+def length(graph):
+    return len(graph)
+
+
+

@@ -2,12 +2,15 @@ import matplotlib
 matplotlib.use("TkAgg")
 import math
 import sys
+import os
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
     import tkinter as Tk
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.lib.format import open_memmap
+import pandas as pd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
@@ -15,7 +18,6 @@ from Graph import Graph
 from functools import partial
 import tkFileDialog
 import math
-import cPickle as pickle
 
 
 class MainWindow(Tk.Tk):
@@ -26,7 +28,7 @@ class MainWindow(Tk.Tk):
         Tk.Tk.__init__(self, *args, **kwargs)
         if not graphs: graphs = []
         plt.style.use("ggplot")
-        self.wm_title("GEE Data Manipulator")
+        self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth(), self.winfo_screenheight() * .9
         self.geometry("%dx%d+0+0" % (self.defaultWidth, self.defaultHeight))
         self.graphs = graphs
@@ -39,6 +41,7 @@ class MainWindow(Tk.Tk):
         self.bottomFrame.pack(side=Tk.BOTTOM)
         self.saveButton = Tk.Button(self.bottomFrame, text="Save", command=self.saveProject)
         self.saveButton.pack()
+        matplotlib.rcParams["agg.path.chunksize"] = 100000
         self.f = Figure(figsize=(5, 4), dpi=150)
         self.canvas = FigureCanvasTkAgg(self.f, master=self)
         self.canvas.show()
@@ -77,16 +80,18 @@ class MainWindow(Tk.Tk):
         np.savez(path, np.array(rawdata), np.array(metadata))
 
     @staticmethod
-    def loadProject(path):
+    def loadProject(path, destroyTk=None):
         """Loads the .npz file at path and creates a MainWindow with the data plotted
 
         The .npz file must be in the format
         npz["arr_0"] = 2d array of graph data grouped by axis
-        and npz["arr_1"] = associated metadata in dicts at corresponding indices
+        and npz["arr_1"] = associated metadata in dict at corresponding index for each graph
         """
-        b = np.load(path)
+        b = np.load(path, mmap_mode="r+")
         rawData, metaData = b["arr_0"], b["arr_1"]
-        print metaData
+        if destroyTk:
+            destroyTk.quit()
+            destroyTk.destroy()
         graphs = []
         window = MainWindow()
         for i in range(len(rawData)):
@@ -107,15 +112,39 @@ class MainWindow(Tk.Tk):
         key_press_handler(event, self.canvas, self.toolbar)
 
     @staticmethod
-    def loadData(path, clean=True):
+    def loadData(path, clean=True, hom=True):
         """Loads data depending on file type, returning the resulting numpy array.
 
         With clean=True, removes non-finite values from the data stored at the path"""
         ftype = path[path.rfind("."):]
         if ftype == ".npy":
-            xData, yData = np.load(path)
+            xData, yData = np.load(path, mmap_mode="r+")
         else:
-            xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
+            if hom:
+                lineSize = None
+                with open(path) as f:
+                    for line in f:
+                        lineSize = sys.getsizeof(line)
+                        break
+                    f.seek(0, 0)
+                if lineSize:
+                    approxLines = os.path.getsize(path) / lineSize
+                else:
+                    raise ValueError("Couldn't find first line")
+                # Open memmap 10% larger than the estimated size
+                if not os.path.exists("/tmp"):
+                    os.makedirs("/tmp")
+                with open("/tmp/arr.npy", 'w+') as tempFile:
+                    mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(approxLines * 3, 2)) # TODO Find number of columns, WHY DO I NEED APPROXLINES * 3???????
+                # Parse 100000 points at a time to avoid overflow
+                n = 0
+                for chunk in pd.read_table(path, chunksize=100000, dtype=np.float64, usecols=[0, 1], header=None):
+                    mmap[n: n + chunk.shape[0]] = chunk.values
+                    n += chunk.shape[0]
+                    print "Chunk read"
+                xData, yData = np.trim_zeros(mmap[:,0]), np.trim_zeros(mmap[:,1])
+            else:
+                xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
         if clean:
             xFinite = np.isfinite(xData)
             yFinite = np.isfinite(yData)
@@ -276,3 +305,13 @@ if __name__ == "__main__":
     #generateEQPGraphs(main)
     generateTestGraphs(main)
     main.mainloop()
+
+
+def printLineSize():
+    with open("BigEQPTest.txt") as f:
+        for i, line in enumerate(f):
+            if i == 2:
+                print line
+                linesize = sys.getsizeof(float(line))
+                break
+        print linesize

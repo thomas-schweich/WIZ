@@ -12,50 +12,63 @@ class InitialWindow(Tk.Tk):
     def __init__(self, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
-        self.wm_title("GEE Data Manipulator")
+        self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .25
-        self.geometry("%dx%d+0+0" % (self.defaultWidth, self.defaultHeight))
+        self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
+                                       self.defaultHeight))
         self.baseFrame = Tk.Frame(master=self)
-        self.baseFrame.pack()
-        text = Tk.Label(self.baseFrame, text="Welcome to the GEE Data Manipulator")
+        self.baseFrame.pack(fill=Tk.X)
+        self.newFrame = Tk.Frame(self.baseFrame)
+        self.error = Tk.Label(self.baseFrame, text="Invalid selection", fg="red")
+        text = Tk.Label(self.baseFrame, text="Welcome to WIZ")
         text.pack()
-        loadButton = Tk.Button(self.baseFrame, text="Load Project", command=self.loadProject)
+        loadButton = ttk.Button(self.baseFrame, text="Load Project", command=self.loadProject)
         loadButton.pack(fill=Tk.X)
-        rawButton = Tk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
+        rawButton = ttk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
         rawButton.pack(fill=Tk.X)
-        blankButton = Tk.Button(self.baseFrame, text="New Blank Project", command=self.createBlankProject)
+        blankButton = ttk.Button(self.baseFrame, text="New Blank Project", command=self.createBlankProject)
         blankButton.pack(fill=Tk.X)
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
-        path = tkFileDialog.askopenfilename()
-        self.quit()
-        self.destroy()
-        MainWindow.loadProject(path)
+        self.error.pack_forget()
+        path = tkFileDialog.askopenfilename(filetypes=[("Numpy Zipped", ".npz")])
+        try:
+            MainWindow.loadProject(path, destroyTk=self)
+            #window.lift()
+            #window.mainloop()
+        except IOError:
+            self.error.pack()
 
     def loadRawData(self):
         """Loads data from a text file using MainWindow.loadData and prompts the user for a slice"""
-        newFrame = Tk.Frame(self.baseFrame)
-        newFrame.pack(side=Tk.BOTTOM)
+        self.error.pack_forget()
+        self.newFrame.destroy()
+        self.newFrame = Tk.Frame(self.baseFrame)
+        self.newFrame.pack(side=Tk.BOTTOM)
         path = tkFileDialog.askopenfilename()
         # loading = ttk.Progressbar(newFrame)
         # loading.pack()
         # loading.start(interval=10)
-        data = MainWindow.loadData(path)
+        try:
+            data = MainWindow.loadData(path)
+        except ValueError:
+            self.error.pack()
+            raise
         # loading.stop()
         # loading.destroy()
-        Tk.Label(newFrame, text="How much data would you like to use?").pack()
+        Tk.Label(self.newFrame, text="How much data would you like to use?").pack()
         tkVar = Tk.IntVar()
-        start = Tk.Entry(newFrame)
+        start = Tk.Entry(self.newFrame)
         start.insert(0, "0")
-        end = Tk.Entry(newFrame)
+        end = Tk.Entry(self.newFrame)
         end.insert(0, str(len(data[0])))
         start.pack()
         end.pack()
-        Tk.Radiobutton(newFrame, text="By Index (from 0 to %d)" % len(data[0]), variable=tkVar, value=0).pack()
-        Tk.Radiobutton(newFrame, text="By x-value (from %d to %d)" % (data[0][0], data[0][-1]), variable=tkVar,
+        Tk.Radiobutton(self.newFrame, text="By Index (from 0 to %d)" % len(data[0]), variable=tkVar, value=0).pack()
+        Tk.Radiobutton(self.newFrame, text="By x-value (from %d to %d)" % (data[0][0], data[0][-1]), variable=tkVar,
                        value=1).pack()
-        Tk.Button(newFrame, text="Create Project",
+        Tk.Button(self.newFrame, text="Create Project",
                   command=lambda: self.sliceData(data, tkVar, start.get(), end.get())).pack()
 
     def createBlankProject(self):
