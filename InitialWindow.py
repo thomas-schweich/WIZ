@@ -52,7 +52,7 @@ class InitialWindow(Tk.Tk):
         # loading.start(interval=10)
         try:
             data = MainWindow.loadData(path)
-        except ValueError:
+        except (ValueError, IOError):
             self.error.pack()
             raise
         # loading.stop()

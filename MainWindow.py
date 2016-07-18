@@ -112,30 +112,44 @@ class MainWindow(Tk.Tk):
         key_press_handler(event, self.canvas, self.toolbar)
 
     @staticmethod
-    def loadData(path, clean=True, hom=True):
+    def loadData(path, clean=True, chunkRead=True):
         """Loads data depending on file type, returning the resulting numpy array.
 
-        With clean=True, removes non-finite values from the data stored at the path"""
+        With clean=True, removes non-finite values from the data stored at the path
+        With chunkRead=True, the number of lines in the file are estimated and a memmap is created to store the data.
+        The data is then loaded into the memmap 100,000 points at a time.
+        """
         ftype = path[path.rfind("."):]
         if ftype == ".npy":
             xData, yData = np.load(path, mmap_mode="r+")
         else:
-            if hom:
-                lineSize = None
+            if chunkRead:
+                lineSize = 0
                 with open(path) as f:
-                    for line in f:
-                        lineSize = sys.getsizeof(line)
-                        break
+                    '''
+                    for i, line in enumerate(f):
+                        if i == 100000:
+                            lineSize += sys.getsizeof(line)
+                            break
+                        else:
+                            lineSize += sys.getsizeof(line)
+                    '''
+                    numLines = sum(1 for line in f)
                     f.seek(0, 0)
+                '''
                 if lineSize:
-                    approxLines = os.path.getsize(path) / lineSize
+                    print "Line size: %d" % lineSize
+                    approxLines = numLines  # os.path.getsize(path) / (lineSize / 100000)
+                    print "approxLines: %d" % approxLines
                 else:
                     raise ValueError("Couldn't find first line")
+                '''
                 # Open memmap 10% larger than the estimated size
                 if not os.path.exists("/tmp"):
                     os.makedirs("/tmp")
                 with open("/tmp/arr.npy", 'w+') as tempFile:
-                    mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(approxLines * 3, 2)) # TODO Find number of columns, WHY DO I NEED APPROXLINES * 3???????
+                    mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
+                    # TODO Find number of columns, WHY DO I NEED APPROXLINES * 3???????
                 # Parse 100000 points at a time to avoid overflow
                 n = 0
                 for chunk in pd.read_table(path, chunksize=100000, dtype=np.float64, usecols=[0, 1], header=None):
@@ -305,13 +319,3 @@ if __name__ == "__main__":
     #generateEQPGraphs(main)
     generateTestGraphs(main)
     main.mainloop()
-
-
-def printLineSize():
-    with open("BigEQPTest.txt") as f:
-        for i, line in enumerate(f):
-            if i == 2:
-                print line
-                linesize = sys.getsizeof(float(line))
-                break
-        print linesize
