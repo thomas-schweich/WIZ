@@ -33,6 +33,7 @@ class GraphWindow(Tk.Frame):
         self.widgets = {}
         self.graph = graph
         self.newGraph = None
+        self.graphSubPlot = None
         self.newSubPlot = None
         self.window = None
         self.radioVar = Tk.IntVar()
@@ -64,8 +65,8 @@ class GraphWindow(Tk.Frame):
             self.window.geometry("%dx%d+0+0" % (self.graph.window.winfo_width(), self.graph.window.winfo_height()))
             self.window.protocol("WM_DELETE_WINDOW", self.close)
             self.f = Figure(figsize=(2, 1), dpi=150)
-            graphSubPlot = self.f.add_subplot(121)
-            self.graph.plot(subplot=graphSubPlot)
+            self.graphSubPlot = self.f.add_subplot(121)
+            self.graph.plot(subplot=self.graphSubPlot)
             self.newSubPlot = self.f.add_subplot(122)
             self.newGraph = copy(self.graph)
             self.newGraph.setTitle("Transformation of " + str(self.graph.title))
@@ -89,6 +90,7 @@ class GraphWindow(Tk.Frame):
             self.rbFrame.pack(side=Tk.TOP, fill=Tk.BOTH)
             self.populate()
             self.refreshOptions()
+            self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
 
     def close(self):
         """Destroys the window, sets the GraphWindows's Toplevel instance to None"""
@@ -219,6 +221,43 @@ class GraphWindow(Tk.Frame):
                 for widget in v:
                     widget.pack(side=Tk.BOTTOM, expand=1)
         # TODO Make more dynamic
+
+    def onClick(self, event):
+        if event.dblclick:
+            if event.inaxes is self.newSubPlot:
+                self.openOptions()
+
+    def openOptions(self):
+        window = Tk.Toplevel(self)
+        frame = Tk.Frame(window)
+        frame.pack()
+        Tk.Label(frame, text="Options").pack()
+        Tk.Label(frame, text="Title:").pack()
+        titleEntry = Tk.Entry(frame)
+        titleEntry.insert(0, self.graph.getTitle())
+        titleEntry.pack()
+        Tk.Label(frame, text="X-Label:").pack()
+        xLabelEntry = Tk.Entry(frame)
+        xLabelEntry.insert(0, self.graph.xLabel)
+        xLabelEntry.pack()
+        Tk.Label(frame, text="Y-Label:").pack()
+        yLabelEntry = Tk.Entry(frame)
+        yLabelEntry.insert(0, self.graph.yLabel)
+        yLabelEntry.pack()
+        applyButton = Tk.Button(frame, text="Apply", command=lambda: self.setLabels(
+            window, titleEntry.get(), xLabelEntry.get(), yLabelEntry.get()))
+        applyButton.pack()
+
+    def setLabels(self, window, title, xLabel, yLabel):
+        self.newGraph.setTitle(title)
+        self.newGraph.setXLabel(xLabel)
+        self.newGraph.setYLabel(yLabel)
+        self.f.delaxes(self.newSubPlot)
+        self.newSubPlot = self.f.add_subplot(122)
+        self.newGraph.plot(subplot=self.newSubPlot)
+        self.canvas.show()
+        window.quit()
+        window.destroy()
 
     def addWidget(self, widgetType, parent=None, *args, **kwargs):
         """Adds a widget to the window.

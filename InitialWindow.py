@@ -4,6 +4,7 @@ from Graph import Graph
 from MainWindow import MainWindow
 import tkFileDialog
 import numpy as np
+import json
 
 
 class InitialWindow(Tk.Tk):
@@ -12,6 +13,8 @@ class InitialWindow(Tk.Tk):
     def __init__(self, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
+        with open('programSettings.json', 'r') as settingsFile:
+            self.settings = json.load(settingsFile)
         self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .25
         self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
