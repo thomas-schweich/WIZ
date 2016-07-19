@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from copy import copy
+from copy import copy, deepcopy
 from MathExpression import MathExpression
 import os
 import math
@@ -106,6 +106,7 @@ class GraphWindow(Tk.Frame):
         Tk.Button(self.TransformationOptionsFrame, text="Plot on This Axis", command=self.plotOnThisAxis).pack(
             fill=Tk.X)
         Tk.Button(self.TransformationOptionsFrame, text="Plot on New Axis", command=self.plotOnNewAxis).pack(fill=Tk.X)
+        Tk.Button(self.TransformationOptionsFrame, text="Replace Graph", command=self.replaceGraph).pack(fill=Tk.X)
         Tk.Button(self.TransformationOptionsFrame, text="Cancel", command=self.close).pack(fill=Tk.X)
         Tk.Label(self.graphOptionsFrame, text="Graph Options").pack(fill=Tk.X)
         Tk.Button(self.graphOptionsFrame, text="Save Graph", command=self.saveGraph).pack(fill=Tk.X)
@@ -306,6 +307,14 @@ class GraphWindow(Tk.Frame):
     def plotOnNewAxis(self):
         """Adds the transformation Graph to a new axis in the Graph's MainWindow"""
         self.graph.window.addGraph(self.newGraph)
+        self.close()
+
+    def replaceGraph(self):
+        """Places the new graph on the axis of .graph and hides .graph"""
+        self.graph.window.addGraph(self.newGraph, parent=self.graph, plot=False)
+        self.graph.hide()
+        self.graph.hide()
+        self.graph.window.plotGraphs()
         self.close()
 
     def quarticFit(self):

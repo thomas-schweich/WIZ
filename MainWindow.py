@@ -149,7 +149,6 @@ class MainWindow(Tk.Tk):
                     os.makedirs("/tmp")
                 with open("/tmp/arr.npy", 'w+') as tempFile:
                     mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
-                    # TODO Find number of columns, WHY DO I NEED APPROXLINES * 3???????
                 # Parse 100000 points at a time to avoid overflow
                 n = 0
                 for chunk in pd.read_table(path, chunksize=100000, dtype=np.float64, usecols=[0, 1], header=None):
@@ -170,6 +169,10 @@ class MainWindow(Tk.Tk):
 
     def addGraph(self, graph, parent=None, plot=True):
         """Adds a graph to this MainWindow's .graphs list, plotting it unless plot is set to false"""
+        graphs = [gr for ax in self.graphs for gr in ax]
+        n = sum(1 for gr in graphs if gr.getTitle() == graph.getTitle())
+        if n:
+            graph.setTitle("%s (%d)" % (str(graph.getTitle()), n))
         self.addGraphToAxisList(self.graphs, graph, parent=parent)
         if plot:
             self.plotGraphs()
@@ -194,8 +197,9 @@ class MainWindow(Tk.Tk):
     def removeGraph(self, graph, plot=True):
         """Removes the graph from the MainWindow's .graphs list, re-plotting unless plot is False"""
         for axis in self.graphs:
-            if graph in axis:
-                axis.remove(graph)
+            for gr in axis:  # if graph in axis:
+                if graph is gr:
+                    axis.remove(graph)
             if len(axis) < 1:
                 self.graphs.remove(axis)
         if plot: self.plotGraphs()
@@ -204,14 +208,16 @@ class MainWindow(Tk.Tk):
         """If event.dblclick, calls promptSelect() with the axis designated by event.inaxis"""
         if event.dblclick:
             for axis in self.graphs:
-                if event.inaxes is axis[0].subplot:
-                    self.promptSelect(axis)
-                    return
+                for graph in axis:
+                    if event.inaxes is graph.subplot:
+                        self.promptSelect(axis)
+                        return
 
     def promptSelect(self, graphsInAxis):
         """Creates a window prompting the user to select a graph from the axis if len(graphsInAxis) > 1
 
         otherwise opens the graph's GraphWindow"""
+        graphsInAxis = [gr for gr in graphsInAxis if gr.isShown()]
         if len(graphsInAxis) > 1:
             window = Tk.Toplevel()
             Tk.Label(window, text="Available Graphs on this axis:").pack()

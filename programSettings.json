@@ -1,1 +1,5 @@
-{"Chunk Size": 100000, "DPI": 100}
+{
+  "Chunk Size": 100000,
+  "DPI": 100,
+  "Style": "ggplot"
+}

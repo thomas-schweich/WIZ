@@ -184,7 +184,7 @@ class Graph:
         frq = frq[range(n / 2)]  # one side frequency range
         Y = fft(y) / n  # fft computing and normalization
         Y = Y[range(n / 2)]
-        result = Graph(self.window, rawXData=frq, rawYData=abs(Y), xLabel="Freq (Hz)", yLabel="|Y(freq)|")
+        result = Graph(self.window, rawXData=frq, rawYData=abs(Y), title="FFT", xLabel="Freq (Hz)", yLabel="|Y(freq)|")
         result.setGraphMode("loglog")
         return result
         '''
