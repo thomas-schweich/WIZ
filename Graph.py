@@ -31,7 +31,7 @@ class Graph:
         self.autoScaleMagnitude = autoScaleMagnitude
         self.subplot = subplot
         self.show = True
-        self.graphWindow = GraphWindow(self)
+        # self.graphWindow = GraphWindow(self)
         self.mode = ""
         # TODO Make .title vs. getTitle() consistent
         # TODO xData and yData functions
@@ -53,6 +53,7 @@ class Graph:
             "mode": self.mode
         }
     '''
+
 
     def getMetaData(self):
         """Returns a dict of all class data which is not a function and not a numpy array"""
@@ -99,6 +100,12 @@ class Graph:
     def getTitle(self):
         return str(self.title)
 
+    def getXLabel(self):
+        return str(self.xLabel)
+
+    def getYLabel(self):
+        return str(self.yLabel)
+
     def setGraphMode(self, mode):
         """Sets the graphing mode
 
@@ -136,7 +143,10 @@ class Graph:
         xMag, yMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData()
         if not mode: mode = self.mode
-        sub = (self.subplot if not subplot else subplot)
+        if subplot:
+            sub = subplot
+        else:
+            sub = self.subplot
         if mode == "scatter":
             (plt if not sub else sub).scatter(xVals, yVals)
         elif mode == "logy":
@@ -148,13 +158,13 @@ class Graph:
         else:
             (plt if not sub else sub).plot(xVals, yVals)  # , ",")
         if not sub:
-            plt.xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
-            plt.ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
-            plt.title(str(self.title))
+            plt.xlabel((str(self.getXLabel()) + "x10^" + str(xMag) if xMag != 0 else str(self.getXLabel())))
+            plt.ylabel((str(self.getYLabel()) + "x10^" + str(yMag) if yMag != 0 else str(self.getYLabel())))
+            plt.title(str(self.getTitle()))
         else:
-            sub.set_xlabel((str(self.xLabel) + "x10^" + str(xMag) if xMag != 0 else str(self.xLabel)))
-            sub.set_ylabel((str(self.yLabel) + "x10^" + str(yMag) if yMag != 0 else str(self.yLabel)))
-            sub.set_title(str(self.title))
+            sub.set_xlabel((str(self.getXLabel()) + "x10^" + str(xMag) if xMag != 0 else str(self.getXLabel())))
+            sub.set_ylabel((str(self.getYLabel()) + "x10^" + str(yMag) if yMag != 0 else str(self.getYLabel())))
+            sub.set_title(str(self.getTitle()))
 
     def scatter(self, subplot=None):
         """Shortcut for mode="scatter" default in plot()"""
@@ -224,6 +234,7 @@ class Graph:
 
     def openWindow(self):
         """Opens this Graph's GraphWindow"""
+        self.graphWindow = GraphWindow(self)  # TODO Why does it need to generate a new window each time?
         self.graphWindow.open()
 
     def isSameX(self, other):
@@ -261,15 +272,17 @@ class Graph:
          non-number object or the data sets do not have the same x values.
         """
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
-            return Graph(self.window, title=str(self.title) + " - " + str(other.title), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] - other.getRawData()[1],
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] - other.getRawData()[1]))
+            g.setTitle(self.getTitle() + " - " + str(other.getTitle()))
+            return g
         elif isinstance(other, Number):
-            return Graph(self.window, title=str(self.title) + " - " + str(other), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] - other,
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] - other))
+            g.setTitle(self.getTitle() + " - " + str(other))
+            return g
         else:
             return NotImplemented
 
@@ -279,15 +292,17 @@ class Graph:
         Returns NotImplemented if used on a non-graph,
          non-number object or the data sets do not have the same x values."""
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
-            return Graph(self.window, title=str(self.title) + " + " + str(other.title), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] + other.getRawData()[1],
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] + other.getRawData()[1]))
+            g.setTitle(self.getTitle() + " + " + str(other.getTitle()))
+            return g
         elif isinstance(other, Number):
-            return Graph(self.window, title=str(self.title) + " + " + str(other), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] + other,
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] + other))
+            g.setTitle(self.getTitle() + " + " + str(other))
+            return g
         else:
             return NotImplemented
 
@@ -297,15 +312,17 @@ class Graph:
         Returns NotImplemented if used on a non-graph,
          non-number object or the data sets do not have the same x values."""
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
-            return Graph(self.window, title=str(self.title) + " * " + str(other.title), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] * other.getRawData()[1],
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] * other.getRawData()[1]))
+            g.setTitle(self.getTitle() + " * " + str(other.getTitle()))
+            return g
         elif isinstance(other, Number):
-            return Graph(self.window, title=str(self.title) + " * " + str(other), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] * other,
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] * other))
+            g.setTitle(self.getTitle() + " * " + str(other))
+            return g
         else:
             return NotImplemented
 
@@ -315,31 +332,38 @@ class Graph:
         Returns NotImplemented if used on a non-graph,
          non-number object or the data sets do not have the same x values."""
         if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
-            return Graph(self.window, title=str(self.title) + " / " + str(other.title), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] / other.getRawData()[1],
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] / other.getRawData()[1]))
+            g.setTitle(self.getTitle() + " / " + str(other.getTitle()))
+            return g
         elif isinstance(other, Number):
-            return Graph(self.window, title=str(self.title) + " / " + str(other), xLabel=self.xLabel,
-                         yLabel=self.yLabel,
-                         rawXData=self.rawXData, rawYData=self.getRawData()[1] / other,
-                         autoScaleMagnitude=self.autoScaleMagnitude)
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], self.getRawData()[1] / other))
+            g.setTitle(self.getTitle() + " / " + str(other))
+            return g
         else:
             return NotImplemented
 
-    def __pow__(self, power, modulo=None):
+    def __pow__(self, other, modulo=None):
         """Takes the y data of this Graph to the power of a number, or another graphs's y data, returning the result
 
         !! Modulo argument not implemented !!"""
         # TODO Modulo
-        if isinstance(power, Number):
-            return Graph(self.window, title=self.getTitle() + " ^ " + str(power), xLabel=self.xLabel, yLabel=self.yLabel,
-                         rawXData=self.getRawData()[0],
-                         rawYData=np.square(self.getRawData()[1]) if power == 2 else np.power(self.getRawData()[1], power))
-        elif isinstance(power, Graph) and np.array_equal(self.getRawData()[0], power.getRawData()[0]):
-            return Graph(self.window, title=self.getTitle() + " ^ " + power.getTitle(), xLabel=self.xLabel,
-                         yLabel=self.yLabel, rawXData=self.getRawData()[0],
-                         rawYData=np.power(self.getRawData()[1], power.getRawData()[1]))
+        if isinstance(other, Graph) and np.array_equal(self.getRawData()[0], other.getRawData()[0]):
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], np.power(self.getRawData()[1], other.getRawData()[1])))
+            g.setTitle(self.getTitle() + " ^ " + str(other.getTitle()))
+            return g
+        elif isinstance(other, Number):
+            g = Graph(self.window)
+            g.__dict__.update(self.getMetaData())
+            g.setRawData((self.getRawData()[0], np.square(
+                self.getRawData()[1]) if other == 2 else np.power(self.getRawData()[1], other)))
+            g.setTitle(self.getTitle() + " ^ " + str(other))
+            return g
         else:
             return NotImplemented
 
@@ -367,7 +391,13 @@ def length(graph):
 
 
 def getFFT(graph):
-    return graph.getFFT()
+    gr = graph.getFFT() / ((2 * np.pi) ** .5)
+    gr.setTitle("FFT (LabView Scale Factor)")
+    return gr
+
+
+def getDispFFT(graph):
+    return ((getFFT(graph) ** 2) / (1.0 / x(graph, 1) - x(graph, 0) * length(graph))) ** .5
 
 
 

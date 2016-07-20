@@ -32,6 +32,7 @@ class GraphWindow(Tk.Frame):
         Tk.Frame.__init__(self, *args, **kwargs)
         self.widgets = {}
         self.graph = graph
+        print "Opening window for %s" % graph.getTitle()
         self.newGraph = None
         self.graphSubPlot = None
         self.newSubPlot = None
@@ -61,7 +62,7 @@ class GraphWindow(Tk.Frame):
         if not self.isOpen:
             self.isOpen = True
             self.window = Tk.Toplevel(self)
-            self.window.wm_title(str(self.graph.title))
+            self.window.wm_title(str(self.graph.getTitle()))
             self.window.geometry("%dx%d+0+0" % (self.graph.window.winfo_width(), self.graph.window.winfo_height()))
             self.window.protocol("WM_DELETE_WINDOW", self.close)
             self.f = Figure(figsize=(2, 1), dpi=150)
@@ -69,9 +70,10 @@ class GraphWindow(Tk.Frame):
             self.graph.plot(subplot=self.graphSubPlot)
             self.newSubPlot = self.f.add_subplot(122)
             self.newGraph = copy(self.graph)
-            self.newGraph.setTitle("Transformation of " + str(self.graph.title))
+            self.newGraph.setTitle("Transformation of " + str(self.graph.getTitle()))
             self.newGraph.plot(subplot=self.newSubPlot)
             self.canvas = FigureCanvasTkAgg(self.f, self.window)
+            self.canvas.draw()
             self.canvas.show()
             self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
             self.baseGroup = Tk.Frame(self.window)
@@ -91,10 +93,15 @@ class GraphWindow(Tk.Frame):
             self.populate()
             self.refreshOptions()
             self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
+            # self.f.draw()
 
     def close(self):
         """Destroys the window, sets the GraphWindows's Toplevel instance to None"""
         del self.widgets
+        if self.f:
+            self.f.clf()
+            plt.close(self.f)
+            del self.f
         self.widgets = {}
         self.window.destroy()
         self.isOpen = False
@@ -193,7 +200,7 @@ class GraphWindow(Tk.Frame):
         self.customBox.val = 4
 
         customGraphTitles = tuple([g.getTitle() for g in graphs])
-        textBox = self.addWidget(Tk.Text, parent=self.customBox, font=("Times", 15))
+        textBox = self.addWidget(Tk.Text, parent=self.customBox, font=("Mono", 15))
         textBox.insert(Tk.END, "<%s>" % str(self.graph.getTitle()))
         customDropVar = Tk.StringVar()
         customDropVar.set(customGraphTitles[0] if len(customGraphTitles) > 0 else "")
@@ -311,10 +318,16 @@ class GraphWindow(Tk.Frame):
 
     def replaceGraph(self):
         """Places the new graph on the axis of .graph and hides .graph"""
+        '''
+        from Graph import Graph
+        newGraph = Graph(self.graph.window)
+        setattr(newGraph, 'rawXData', self.newGraph.rawXData)
+        setattr(newGraph, 'rawYData', self.newGraph.rawYData)
+        for att in self.newGraph.getMetaData():
+            setattr(newGraph, att, self.newGraph.getMetaData()[att])
+        '''
         self.graph.window.addGraph(self.newGraph, parent=self.graph, plot=False)
-        self.graph.hide()
-        self.graph.hide()
-        self.graph.window.plotGraphs()
+        self.graph.window.removeGraph(self.graph)
         self.close()
 
     def quarticFit(self):
@@ -401,7 +414,7 @@ class GraphWindow(Tk.Frame):
         graphVars = {}
         for axis in self.graph.window.graphs:
             for graph in axis:
-                graphVars[graph.getTitle()] = graph
+                graphVars[graph.getTitle()] = copy(graph)
         print graphVars
         exp = MathExpression(str(expression), modules=(Graph, np, math), variables=graphVars, fallbackFunc=self.graph.useYForCall)
         graph = exp.evaluate()

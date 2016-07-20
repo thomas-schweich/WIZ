@@ -202,10 +202,12 @@ class MainWindow(Tk.Tk):
                     axis.remove(graph)
             if len(axis) < 1:
                 self.graphs.remove(axis)
+        print "Graph list: %s" % str(self.graphs)
         if plot: self.plotGraphs()
 
     def onClick(self, event):
         """If event.dblclick, calls promptSelect() with the axis designated by event.inaxis"""
+        print "Graphs list: %s" % str(self.graphs)
         if event.dblclick:
             for axis in self.graphs:
                 for graph in axis:
@@ -218,6 +220,7 @@ class MainWindow(Tk.Tk):
 
         otherwise opens the graph's GraphWindow"""
         graphsInAxis = [gr for gr in graphsInAxis if gr.isShown()]
+        print "Graphs in axis: %s" % str(graphsInAxis)
         if len(graphsInAxis) > 1:
             window = Tk.Toplevel()
             Tk.Label(window, text="Available Graphs on this axis:").pack()
