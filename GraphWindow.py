@@ -242,15 +242,15 @@ class GraphWindow(Tk.Frame):
         Tk.Label(frame, text="Options").pack()
         Tk.Label(frame, text="Title:").pack()
         titleEntry = Tk.Entry(frame)
-        titleEntry.insert(0, self.graph.getTitle())
+        titleEntry.insert(0, self.newGraph.getTitle())
         titleEntry.pack()
         Tk.Label(frame, text="X-Label:").pack()
         xLabelEntry = Tk.Entry(frame)
-        xLabelEntry.insert(0, self.graph.xLabel)
+        xLabelEntry.insert(0, self.newGraph.xLabel)
         xLabelEntry.pack()
         Tk.Label(frame, text="Y-Label:").pack()
         yLabelEntry = Tk.Entry(frame)
-        yLabelEntry.insert(0, self.graph.yLabel)
+        yLabelEntry.insert(0, self.newGraph.yLabel)
         yLabelEntry.pack()
         applyButton = Tk.Button(frame, text="Apply", command=lambda: self.setLabels(
             window, titleEntry.get(), xLabelEntry.get(), yLabelEntry.get()))
@@ -264,7 +264,6 @@ class GraphWindow(Tk.Frame):
         self.newSubPlot = self.f.add_subplot(122)
         self.newGraph.plot(subplot=self.newSubPlot)
         self.canvas.show()
-        window.quit()
         window.destroy()
 
     def addWidget(self, widgetType, parent=None, *args, **kwargs):
