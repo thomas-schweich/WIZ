@@ -43,7 +43,7 @@ class MathExpression:
         """Separates string by .operators using regex"""
         operators = self.operators.keys()
         operators.sort(key=lambda x: -len(x))
-        exp = re.findall(r'<.*?>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|\w+', string)
+        exp = re.findall(r'<.*?>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|[\.\w]+', string)
         print exp
         return exp
 

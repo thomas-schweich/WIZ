@@ -5,16 +5,32 @@ from MainWindow import MainWindow
 import tkFileDialog
 import numpy as np
 import json
+import os
 
 
 class InitialWindow(Tk.Tk):
     """Tk object which creates an initial window for loading projects and files, ultimately creating a MainWindow"""
+    __author__ = "Thomas Schweich"
+
+    defaultProgramSettings = {
+        "Load Chunk Size": 100000,
+        "Plot Chunk Size": 100000,
+        "DPI": 150,
+        "Style": "ggplot",
+        "User Font Size": 14
+    }
 
     def __init__(self, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
-        with open('programSettings.json', 'r') as settingsFile:
-            self.settings = json.load(settingsFile)
+        # Load settings. If they don't exist, create default settings file.
+        if os.path.isfile('programSettings.json'):
+            with open('programSettings.json', 'r') as settingsFile:
+                self.settings = json.load(settingsFile)
+        else:
+            with open('programSettings.json', 'w+') as settingsFile:
+                json.dump(InitialWindow.defaultProgramSettings, settingsFile)
+                self.settings = InitialWindow.defaultProgramSettings
         self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .25
         self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
@@ -38,8 +54,8 @@ class InitialWindow(Tk.Tk):
         path = tkFileDialog.askopenfilename(filetypes=[("Numpy Zipped", ".npz")])
         try:
             MainWindow.loadProject(path, destroyTk=self)
-            #window.lift()
-            #window.mainloop()
+            # window.lift()
+            # window.mainloop()
         except IOError:
             self.error.pack()
 
@@ -54,10 +70,10 @@ class InitialWindow(Tk.Tk):
         # loading.pack()
         # loading.start(interval=10)
         try:
-            data = MainWindow.loadData(path)
+            data = MainWindow.loadData(path, chunkSize=self.settings['Load Chunk Size'])
         except (ValueError, IOError):
             self.error.pack()
-            raise
+            return
         # loading.stop()
         # loading.destroy()
         Tk.Label(self.newFrame, text="How much data would you like to use?").pack()
@@ -102,6 +118,7 @@ class InitialWindow(Tk.Tk):
         win.setGraphs([[gr]])
         win.plotGraphs()
         win.mainloop()
+
 
 if __name__ == "__main__":
     initial = InitialWindow()

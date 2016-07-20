@@ -1,6 +1,5 @@
 import matplotlib
 matplotlib.use("TkAgg")
-import math
 import sys
 import os
 if sys.version_info[0] < 3:
@@ -18,6 +17,7 @@ from Graph import Graph
 from functools import partial
 import tkFileDialog
 import math
+import json
 
 
 class MainWindow(Tk.Tk):
@@ -26,8 +26,10 @@ class MainWindow(Tk.Tk):
     def __init__(self, graphs=None, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
+        with open('programSettings.json', 'r') as settingsFile:
+            self.settings = json.load(settingsFile)
         if not graphs: graphs = []
-        plt.style.use("ggplot")
+        plt.style.use(self.settings["Style"])
         self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth(), self.winfo_screenheight() * .9
         self.geometry("%dx%d+0+0" % (self.defaultWidth, self.defaultHeight))
@@ -41,9 +43,9 @@ class MainWindow(Tk.Tk):
         self.bottomFrame.pack(side=Tk.BOTTOM)
         self.saveButton = Tk.Button(self.bottomFrame, text="Save", command=self.saveProject)
         self.saveButton.pack()
-        matplotlib.rcParams["agg.path.chunksize"] = 100000
-        self.f = Figure(figsize=(5, 4), dpi=150)
-        self.canvas = FigureCanvasTkAgg(self.f, master=self)
+        matplotlib.rcParams["agg.path.chunksize"] = self.settings["Plot Chunk Size"]
+        self.fig = Figure(figsize=(5, 4), dpi=self.settings['DPI'])
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
@@ -112,7 +114,7 @@ class MainWindow(Tk.Tk):
         key_press_handler(event, self.canvas, self.toolbar)
 
     @staticmethod
-    def loadData(path, clean=True, chunkRead=True):
+    def loadData(path, clean=True, chunkRead=True, chunkSize=100000):
         """Loads data depending on file type, returning the resulting numpy array.
 
         With clean=True, removes non-finite values from the data stored at the path
@@ -151,7 +153,7 @@ class MainWindow(Tk.Tk):
                     mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
                 # Parse 100000 points at a time to avoid overflow
                 n = 0
-                for chunk in pd.read_table(path, chunksize=100000, dtype=np.float64, usecols=[0, 1], header=None):
+                for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[0, 1], header=None):
                     mmap[n: n + chunk.shape[0]] = chunk.values
                     n += chunk.shape[0]
                     print "Chunk read"
@@ -238,7 +240,7 @@ class MainWindow(Tk.Tk):
 
     def plotGraphs(self):
         """Plots all graphs in the MainWindows .graphs list, creating a button for each which isn't shown"""
-        self.f.clear()
+        self.fig.clear()
         self.clearButtons()
         for axis in self.graphs:
             for graph in axis:
@@ -253,7 +255,7 @@ class MainWindow(Tk.Tk):
                         break
         length = len(axesToShow)
         rows = math.ceil(length / 2.0)
-        subplots = [self.f.add_subplot(rows, 1 if length == 1 else 2, index + 1)
+        subplots = [self.fig.add_subplot(rows, 1 if length == 1 else 2, index + 1)
                     for index in range(0, length)]
         for idx, axis in enumerate(axesToShow):
             for g in axis:

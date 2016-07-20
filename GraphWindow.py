@@ -17,6 +17,7 @@ from MathExpression import MathExpression
 import os
 import math
 import Graph
+import json
 
 
 class GraphWindow(Tk.Frame):
@@ -30,6 +31,8 @@ class GraphWindow(Tk.Frame):
     def __init__(self, graph, *args, **kwargs):
         """A frame object who's open() method creates a Tk.Toplevel (new window) with its contents"""
         Tk.Frame.__init__(self, *args, **kwargs)
+        with open('programSettings.json', 'r') as settingsFile:
+            self.settings = json.load(settingsFile)
         self.widgets = {}
         self.graph = graph
         print "Opening window for %s" % graph.getTitle()
@@ -65,7 +68,7 @@ class GraphWindow(Tk.Frame):
             self.window.wm_title(str(self.graph.getTitle()))
             self.window.geometry("%dx%d+0+0" % (self.graph.window.winfo_width(), self.graph.window.winfo_height()))
             self.window.protocol("WM_DELETE_WINDOW", self.close)
-            self.f = Figure(figsize=(2, 1), dpi=150)
+            self.f = Figure(figsize=(2, 1), dpi=self.settings["DPI"])
             self.graphSubPlot = self.f.add_subplot(121)
             self.graph.plot(subplot=self.graphSubPlot)
             self.newSubPlot = self.f.add_subplot(122)
@@ -200,7 +203,7 @@ class GraphWindow(Tk.Frame):
         self.customBox.val = 4
 
         customGraphTitles = tuple([g.getTitle() for g in graphs])
-        textBox = self.addWidget(Tk.Text, parent=self.customBox, font=("Mono", 15))
+        textBox = self.addWidget(Tk.Text, parent=self.customBox, font=("Mono", self.settings['User Font Size']))
         textBox.insert(Tk.END, "<%s>" % str(self.graph.getTitle()))
         customDropVar = Tk.StringVar()
         customDropVar.set(customGraphTitles[0] if len(customGraphTitles) > 0 else "")
