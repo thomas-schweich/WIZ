@@ -328,7 +328,7 @@ class GraphWindow(Tk.Frame):
         for att in self.newGraph.getMetaData():
             setattr(newGraph, att, self.newGraph.getMetaData()[att])
         '''
-        self.graph.window.addGraph(self.newGraph, parent=self.graph, plot=False)
+        self.graph.window.replaceGraph(self.graph, self.newGraph)
         self.graph.window.removeGraph(self.graph)
         self.close()
 

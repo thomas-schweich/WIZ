@@ -1,7 +1,7 @@
 {
   "Load Chunk Size": 100000,
   "Plot Chunk Size": 100000,
-  "Style": "ggplot",
+  "Style": ["ggplot"],
   "DPI": 150,
   "User Font Size": 14
 }

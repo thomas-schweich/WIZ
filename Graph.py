@@ -33,6 +33,7 @@ class Graph:
         self.show = True
         # self.graphWindow = GraphWindow(self)
         self.mode = ""
+        self.master = False
         # TODO Make .title vs. getTitle() consistent
         # TODO xData and yData functions
 

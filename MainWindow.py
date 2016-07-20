@@ -180,6 +180,18 @@ class MainWindow(Tk.Tk):
             self.plotGraphs()
         return graph
 
+    def replaceGraph(self, oldGraph, newGraph, plot=True):
+        graphs = [gr for ax in self.graphs for gr in ax]
+        n = sum(1 for gr in graphs if gr.getTitle() == newGraph.getTitle())
+        if n:
+            newGraph.setTitle("%s (%d)" % (str(newGraph.getTitle()), n))
+        for i, ax in enumerate(self.graphs):
+            for j, graph in enumerate(ax):
+                if self.graphs[i][j] is oldGraph:
+                    self.graphs[i][j] = newGraph
+                    if plot: self.plotGraphs()
+                    return
+
     @staticmethod
     def addGraphToAxisList(axisList, graph, parent=None):
         """Takes a list and adds a graph to it, adding it to its parent's sub-list if specified
@@ -223,14 +235,33 @@ class MainWindow(Tk.Tk):
         otherwise opens the graph's GraphWindow"""
         graphsInAxis = [gr for gr in graphsInAxis if gr.isShown()]
         print "Graphs in axis: %s" % str(graphsInAxis)
+        graphsInAxis[0].radioVar = Tk.IntVar()  # Must attach to a persistent object b/c Tkinter garbage collection bug
         if len(graphsInAxis) > 1:
             window = Tk.Toplevel()
             Tk.Label(window, text="Available Graphs on this axis:").pack()
-            for graph in graphsInAxis:
-                Tk.Button(window, text=str(graph.title),
-                          command=partial(self.openGrWinFromDialogue, graph, window)).pack()
+            for i, graph in enumerate(graphsInAxis):
+                frame = Tk.Frame(window)
+                frame.pack(fill=Tk.X)
+                Tk.Button(frame, text=str(graph.title),
+                          command=partial(self.openGrWinFromDialogue, graph, window)).pack(fill=Tk.X, expand=True, side=Tk.LEFT)
+                radiobutton = Tk.Radiobutton(frame, variable=graphsInAxis[0].radioVar, value=i, command=partial(self.setMaster, graph, graphsInAxis))
+                if graph.master:
+                    radiobutton.select()
+                else:
+                    radiobutton.deselect()
+                radiobutton.pack(side=Tk.RIGHT)
+
         else:
             graphsInAxis[0].openWindow()
+
+    def setMaster(self, graph, graphsInAxis):
+        print "setMaster() called"
+        for g in graphsInAxis:
+            if g.master:
+                print "%s was master" % str(g)
+            g.master = False
+        graph.master = True
+        self.plotGraphs()
 
     @staticmethod
     def openGrWinFromDialogue(graph, window):
@@ -258,10 +289,18 @@ class MainWindow(Tk.Tk):
         subplots = [self.fig.add_subplot(rows, 1 if length == 1 else 2, index + 1)
                     for index in range(0, length)]
         for idx, axis in enumerate(axesToShow):
+            master = None
             for g in axis:
-                if g.isShown():
+                if g.isShown() and not g.master:
                     g.setSubplot(subplots[idx])
                     g.plot()
+                if g.master:
+                    g.setSubplot(subplots[idx])
+                    master = g
+            if master:
+                master.plot()
+            else:
+                axis[-1].master = True
         self.canvas.draw()
         for button in self.buttons:
             button.pack(side=Tk.LEFT, fill=Tk.X, expand=1)
