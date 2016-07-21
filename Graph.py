@@ -384,6 +384,10 @@ class Graph:
         return len(self.getRawData()[0])
 
 
+def create(xData, yData):
+    return Graph(rawXData=xData, rawYData=yData)
+
+
 def x(graph, index=None):
     if index:
         return graph.getRawData()[0][index]

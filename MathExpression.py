@@ -104,8 +104,11 @@ class MathExpression:
                             # ^ Check - Should be ok though since previous operators are removed
                             prevIndex = newLocation - 1
                             nextIndex = newLocation + 1
-                            prev = self._interpret(newExp[prevIndex])
-                            nxt = self._interpret(newExp[nextIndex])
+                            try:
+                                prev = self._interpret(newExp[prevIndex])
+                                nxt = self._interpret(newExp[nextIndex])
+                            except IndexError as i:
+                                raise MathExpression.ParseFailure(part, i)
                             print "Combining %s with %s using '%s' operator" % (str(prev), str(nxt), str(part))
                             solution = self.operators[part](prev, nxt)
                             print "Solution: " + str(solution)
@@ -181,13 +184,13 @@ class MathExpression:
         def __repr__(self):
             custom = ""
             if self.exception is AttributeError:
-                custom += "'%s' not found in namespace. " % str(self.badPart)
+                custom += "'%s' not found in namespace. \n" % str(self.badPart)
             if self.badPart in MathExpression.operators:
-                custom += "It is likely that you missed a parenthesis. "
+                custom += "It is likely that the operator was missing an argument. "
             return "%s threw error: %s. %s" % (str(self.badPart), str(self.exception), custom)
 
         def __str__(self):
-            return self.__repr__()
+            return str(self.__repr__())
 
     class SyntaxError(Exception):
         """Represents only the expression group (i.e. token + operator + token)"""
@@ -195,7 +198,10 @@ class MathExpression:
             self.badPart = badPart
 
         def __repr__(self):
-            return "Syntax error on token %s" % str(self.badPart)
+            custom = ""
+            if "(" in self.badPart or ")" in self.badPart:
+                custom += "It is likely that you are missing a parenthesis."
+            return "Syntax error on sub expression: %s. \n%s" % (str(self.badPart), custom)
 
         def __str__(self):
-            return self.__repr__()
+            return str(self.__repr__())

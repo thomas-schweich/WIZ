@@ -212,7 +212,7 @@ class GraphWindow(Tk.Frame):
         customDropdown = Tk.OptionMenu(self.optionsFrame, customDropVar, *customGraphTitles, command=lambda name:
                        textBox.insert(Tk.INSERT, "<%s>" % str(customGraphTitles[customGraphTitles.index(name)])))
         self.widgets[self.customBox].append(customDropdown)  # Manual addition
-        self.addWidget(Tk.Button, parent=self.customBox, text="Parse",
+        self.addWidget(Tk.Button, parent=self.customBox, text="Parse Expression",
                        command=lambda: self.parseExpression(textBox.get(1.0, Tk.END)))
 
         # TODO Cases with multiple graphs of the same title
@@ -338,8 +338,7 @@ class GraphWindow(Tk.Frame):
         try:
             return self.graph.getCurveFit(fitFunction=fitFunction)
         except RuntimeError as r:
-            tkMessageBox.showerror("Fit", "Couldn't fit function. \n%s" % str(r))
-
+            tkMessageBox.showerror("Fit", "Couldn't fit function.\n" + str(r))
 
     def quarticFit(self):
         """Plots a quartic fit of the Graph's data with reference"""
@@ -434,8 +433,19 @@ class GraphWindow(Tk.Frame):
                 graphVars[graph.getTitle()] = copy(graph)
         print graphVars
         exp = MathExpression(str(expression), modules=(Graph, np, math), variables=graphVars, fallbackFunc=self.graph.useYForCall)
-        graph = exp.evaluate()
-        self.plotAlone(graph)
+        try:
+            graph = exp.evaluate()
+        except (MathExpression.ParseFailure, MathExpression.SyntaxError) as e:
+            tkMessageBox.showwarning("Failed To Parse", "The parser combined the parts of your expression until it "
+                                                        "reached the expression below.\n" + str(e))
+            self.window.lift()
+            return
+        try:
+            graph.window = self.graph.window
+            self.plotAlone(graph)
+        except AttributeError:
+            tkMessageBox.showinfo("Result", str(graph))
+            self.window.lift()
 
     @staticmethod
     def avoidDuplicates(path, getExtension=False):

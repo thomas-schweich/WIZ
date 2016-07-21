@@ -68,6 +68,7 @@ class MainWindow(Tk.Tk):
         """Saves this window's graphs and """
         path = tkFileDialog.asksaveasfilename(defaultextension=".npz",
                                               filetypes=[("Numpy", ".npz")])
+        if not path: return
         #with open(path, "a+") as p:
         rawdata = []
         metadata = []
