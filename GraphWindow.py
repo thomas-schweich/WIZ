@@ -66,6 +66,7 @@ class GraphWindow(Tk.Frame):
         if not self.isOpen:
             self.isOpen = True
             self.window = Tk.Toplevel(self)
+            self.window.iconbitmap(self.settings["Icon Location"])
             self.window.wm_title(str(self.graph.getTitle()))
             self.window.geometry("%dx%d+0+0" % (self.graph.window.winfo_width(), self.graph.window.winfo_height()))
             self.window.protocol("WM_DELETE_WINDOW", self.close)

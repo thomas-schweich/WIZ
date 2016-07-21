@@ -7,6 +7,7 @@ from scipy.optimize import curve_fit
 from GraphWindow import GraphWindow
 from numbers import Number
 from MathExpression import MathExpression
+import math
 
 
 class Graph:
@@ -147,7 +148,7 @@ class Graph:
         xMag, yMag = self.getMagnitudes()
         numPts = len(self.getRawData()[0])
         if maxPoints and numPts > maxPoints:
-            step = int(numPts / maxPoints)
+            step = math.ceil(numPts / maxPoints)
             print "Using step size: %d" % step
             xVals = self.getScaledMagData()[0][::step]
             yVals = self.getScaledMagData()[1][::step]

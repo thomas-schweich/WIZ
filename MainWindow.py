@@ -26,9 +26,9 @@ class MainWindow(Tk.Tk):
     def __init__(self, graphs=None, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
-        self.iconbitmap(r'C:\Users\thoma\Downloads\WIZ.ico')
         with open('programSettings.json', 'r') as settingsFile:
             self.settings = json.load(settingsFile)
+        self.iconbitmap(self.settings["Icon Location"])
         if not graphs: graphs = []
         plt.style.use(self.settings["Style"])
         self.wm_title("WIZ")

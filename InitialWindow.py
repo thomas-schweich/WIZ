@@ -18,7 +18,8 @@ class InitialWindow(Tk.Tk):
         "Max Preview Points": 100000,
         "DPI": 150,
         "Style": "ggplot",
-        "User Font Size": 14
+        "User Font Size": 14,
+        "Icon Location": r'C:\Users\thoma\Downloads\WIZ.ico'
     }
 
     def __init__(self, *args, **kwargs):
@@ -32,6 +33,7 @@ class InitialWindow(Tk.Tk):
             with open('programSettings.json', 'w+') as settingsFile:
                 json.dump(InitialWindow.defaultProgramSettings, settingsFile)
                 self.settings = InitialWindow.defaultProgramSettings
+        self.iconbitmap(self.settings["Icon Location"])
         self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .25
         self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
