@@ -8,6 +8,7 @@ if sys.version_info[0] < 3:
 else:
     import tkinter as Tk
 import tkFileDialog
+import tkMessageBox
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -70,11 +71,11 @@ class GraphWindow(Tk.Frame):
             self.window.protocol("WM_DELETE_WINDOW", self.close)
             self.f = Figure(figsize=(2, 1), dpi=self.settings["DPI"])
             self.graphSubPlot = self.f.add_subplot(121)
-            self.graph.plot(subplot=self.graphSubPlot)
+            self.graph.plot(subplot=self.graphSubPlot, maxPoints=self.settings["Max Preview Points"])
             self.newSubPlot = self.f.add_subplot(122)
             self.newGraph = copy(self.graph)
             self.newGraph.setTitle("Transformation of " + str(self.graph.getTitle()))
-            self.newGraph.plot(subplot=self.newSubPlot)
+            self.newGraph.plot(subplot=self.newSubPlot, maxPoints=self.settings["Max Preview Points"])
             self.canvas = FigureCanvasTkAgg(self.f, self.window)
             self.canvas.draw()
             self.canvas.show()
@@ -332,23 +333,31 @@ class GraphWindow(Tk.Frame):
         self.graph.window.removeGraph(self.graph)
         self.close()
 
+    def safeFit(self, fitFunction):
+        """Safely returns a fit, displaying an error message if no fit is found"""
+        try:
+            return self.graph.getCurveFit(fitFunction=fitFunction)
+        except RuntimeError as r:
+            tkMessageBox.showerror("Fit", "Couldn't fit function. \n%s" % str(r))
+
+
     def quarticFit(self):
         """Plots a quartic fit of the Graph's data with reference"""
-        self.plotWithReference(self.graph.getCurveFit(
+        self.plotWithReference(self.safeFit(
             fitFunction=lambda x, a, b, c, d, e: a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + e))
 
     def cubicFit(self):
         """Plots a cubic fit of the Graph's data with reference"""
         self.plotWithReference(
-            self.graph.getCurveFit(fitFunction=lambda x, a, b, c, d: a * x ** 3 + b * x ** 2 + c * x + d))
+            self.safeFit(fitFunction=lambda x, a, b, c, d: a * x ** 3 + b * x ** 2 + c * x + d))
 
     def quadraticFit(self):
         """Plots a quadratic fit of the Graph's data with reference"""
-        self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b, c: a * x ** 2 + b * x + c))
+        self.plotWithReference(self.safeFit(fitFunction=lambda x, a, b, c: a * x ** 2 + b * x + c))
 
     def linearFit(self):
         """Plots a linear fit of the .graph data with reference"""
-        self.plotWithReference(self.graph.getCurveFit(fitFunction=lambda x, a, b: a * x + b))
+        self.plotWithReference(self.safeFit(fitFunction=lambda x, a, b: a * x + b))
 
     def addSlice(self, tkVar, begin, end):
         """Plots a slice of .graph alone"""

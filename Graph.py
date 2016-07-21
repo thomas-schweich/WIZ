@@ -55,12 +55,15 @@ class Graph:
         }
     '''
 
-
     def getMetaData(self):
         """Returns a dict of all class data which is not a function and not a numpy array"""
         return {key: value for key, value in self.__dict__.items() if not key.startswith("__") and
                 not callable(key) and not (key == "rawXData" or key == "rawYData" or key == "graphWindow" or
                                            key == "window" or key == "subplot")}
+
+    def useMetaFrom(self, other):
+        """Sets the metadata of this graph to the metadata of other"""
+        self.__dict__.update(other.getMetaData())  # TODO Use in all factory functions
 
     def setRawData(self, data):
         """Uses a tuple of (x data, y data) as the unscaled data of the graph."""
@@ -139,10 +142,18 @@ class Graph:
         xData, yData = self.getRawData()
         return xData / 10 ** xMag, yData / 10 ** yMag
 
-    def plot(self, subplot=None, mode=None):
+    def plot(self, subplot=None, mode=None, maxPoints=None):
         """Plots a PyPlot of the graph"""
         xMag, yMag = self.getMagnitudes()
-        xVals, yVals = self.getScaledMagData()
+        numPts = len(self.getRawData()[0])
+        if maxPoints and numPts > maxPoints:
+            step = int(numPts / maxPoints)
+            print "Using step size: %d" % step
+            xVals = self.getScaledMagData()[0][::step]
+            yVals = self.getScaledMagData()[1][::step]
+            print "Points plotted: %d" % len(xVals)
+        else:
+            xVals, yVals = self.getScaledMagData()
         if not mode: mode = self.mode
         if subplot:
             sub = subplot
@@ -176,7 +187,7 @@ class Graph:
         forcedXMag, forcedYMag = self.getMagnitudes(forceAutoScale=True)
         setXMag, setYMag = self.getMagnitudes()
         xVals, yVals = self.getScaledMagData(forceAutoScale=True)
-        fitParams, fitCoVariances = curve_fit(fitFunction, xVals, yVals)  # , maxfev=100000)
+        fitParams, fitCoVariances = curve_fit(fitFunction, xVals, yVals, check_finite=False)  # , maxfev=100000)
         magAdjustment = forcedYMag - setYMag
         return Graph(self.window, rawXData=np.array(self.getRawData()[0]), rawYData=np.array(
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),

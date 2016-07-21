@@ -15,6 +15,7 @@ class InitialWindow(Tk.Tk):
     defaultProgramSettings = {
         "Load Chunk Size": 100000,
         "Plot Chunk Size": 100000,
+        "Max Preview Points": 100000,
         "DPI": 150,
         "Style": "ggplot",
         "User Font Size": 14
