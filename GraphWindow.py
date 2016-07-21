@@ -392,6 +392,10 @@ class GraphWindow(Tk.Frame):
         fig.savefig(path)
 
     def saveData(self):
+        """Prompts the user to give a filename from the file browser, and saves .graphs raw data to the file by type
+
+        Supports .csv and .npy formats
+        """
         """Saves a csv or npy of .graph's data to a user specified directory
 
         If any file extension other than .npy is specified, the data will actually be saved in csv format"""
@@ -405,6 +409,7 @@ class GraphWindow(Tk.Frame):
             np.savetxt(path, np.dstack(self.graph.getRawData())[0], delimiter=",")
 
     def showHide(self, checkVal):
+        """Shows or hides .graph based on checkVal"""
         print checkVal.get()
         if checkVal.get() == 0:
             self.graph.show = False
@@ -413,6 +418,7 @@ class GraphWindow(Tk.Frame):
         self.graph.window.plotGraphs()
 
     def parseExpression(self, expression):
+        """Creates a MathExpression with variables for each graph in the project"""
         graphVars = {}
         for axis in self.graph.window.graphs:
             for graph in axis:

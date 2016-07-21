@@ -26,6 +26,7 @@ class MainWindow(Tk.Tk):
     def __init__(self, graphs=None, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
+        self.iconbitmap(r'C:\Users\thoma\Downloads\WIZ.ico')
         with open('programSettings.json', 'r') as settingsFile:
             self.settings = json.load(settingsFile)
         if not graphs: graphs = []
@@ -146,12 +147,11 @@ class MainWindow(Tk.Tk):
                 else:
                     raise ValueError("Couldn't find first line")
                 '''
-                # Open memmap 10% larger than the estimated size
                 if not os.path.exists("/tmp"):
                     os.makedirs("/tmp")
-                with open("/tmp/arr.npy", 'w+') as tempFile:
+                with open("/tmp/arr.npy", "w+") as tempFile:
                     mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
-                # Parse 100000 points at a time to avoid overflow
+                # Parse "chunk size" number points at a time to avoid overflow
                 n = 0
                 for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[0, 1], header=None):
                     mmap[n: n + chunk.shape[0]] = chunk.values
@@ -235,7 +235,7 @@ class MainWindow(Tk.Tk):
         otherwise opens the graph's GraphWindow"""
         graphsInAxis = [gr for gr in graphsInAxis if gr.isShown()]
         print "Graphs in axis: %s" % str(graphsInAxis)
-        graphsInAxis[0].radioVar = Tk.IntVar()  # Must attach to a persistent object b/c Tkinter garbage collection bug
+        graphsInAxis[0].radioVar = Tk.IntVar()  # Attached to a persistent object b/c Tkinter garbage collection bug
         if len(graphsInAxis) > 1:
             window = Tk.Toplevel()
             Tk.Label(window, text="Available Graphs on this axis:").pack()
@@ -243,8 +243,10 @@ class MainWindow(Tk.Tk):
                 frame = Tk.Frame(window)
                 frame.pack(fill=Tk.X)
                 Tk.Button(frame, text=str(graph.title),
-                          command=partial(self.openGrWinFromDialogue, graph, window)).pack(fill=Tk.X, expand=True, side=Tk.LEFT)
-                radiobutton = Tk.Radiobutton(frame, variable=graphsInAxis[0].radioVar, value=i, command=partial(self.setMaster, graph, graphsInAxis))
+                          command=partial(self.openGrWinFromDialogue, graph, window)).pack(fill=Tk.X, expand=True,
+                                                                                           side=Tk.LEFT)
+                radiobutton = Tk.Radiobutton(frame, variable=graphsInAxis[0].radioVar, value=i,
+                                             command=partial(self.setMaster, graph, graphsInAxis))
                 if graph.master:
                     radiobutton.select()
                 else:
