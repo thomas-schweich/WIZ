@@ -299,7 +299,11 @@ class GraphWindow(Tk.Frame):
         referenceGraph = copy(self.graph)
         self.newGraph = graph
         referenceGraph.plot(subplot=self.newSubPlot)
-        self.newGraph.plot(subplot=self.newSubPlot)
+        try:
+            self.newGraph.plot(subplot=self.newSubPlot)
+        except AttributeError:
+            self.newGraph = referenceGraph
+            raise
         self.canvas.show()
 
     def plotAlone(self, graph):
@@ -340,6 +344,7 @@ class GraphWindow(Tk.Frame):
             return self.graph.getCurveFit(fitFunction=fitFunction)
         except RuntimeError as r:
             tkMessageBox.showerror("Fit", "Couldn't fit function.\n" + str(r))
+            self.window.lift()
 
     def quarticFit(self):
         """Plots a quartic fit of the Graph's data with reference"""

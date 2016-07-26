@@ -20,8 +20,7 @@ class InitialWindow(Tk.Tk):
         "DPI": 150,
         "Style": ["ggplot"],
         "User Font Size": 14,
-        "Icon Location": r'res\WIZ.ico',
-        "Non Binary Extensions": [".txt", ".csv"]
+        "Icon Location": r'res\WIZ.ico'
     }
 
     def __init__(self, *args, **kwargs):
@@ -37,21 +36,21 @@ class InitialWindow(Tk.Tk):
                 self.settings = InitialWindow.defaultProgramSettings
         self.iconbitmap(self.settings["Icon Location"])
         self.wm_title("WIZ")
-        self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .25
+        self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .5
         self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
-                                       self.defaultHeight))
+                                       0))
         self.baseFrame = Tk.Frame(master=self)
-        self.baseFrame.pack(fill=Tk.X)
+        self.baseFrame.pack(fill=Tk.X, side=Tk.TOP)
         self.newFrame = Tk.Frame(self.baseFrame)
         self.error = Tk.Label(self.baseFrame, text="Invalid selection", fg="red")
         text = Tk.Label(self.baseFrame, text="Welcome to WIZ")
         text.pack()
         loadButton = ttk.Button(self.baseFrame, text="Load Project", command=self.loadProject)
-        loadButton.pack(fill=Tk.X)
+        loadButton.pack(fill=Tk.X, side=Tk.TOP)
         rawButton = ttk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
-        rawButton.pack(fill=Tk.X)
+        rawButton.pack(fill=Tk.X, side=Tk.TOP)
         blankButton = ttk.Button(self.baseFrame, text="New Blank Project", command=self.createBlankProject)
-        blankButton.pack(fill=Tk.X)
+        blankButton.pack(fill=Tk.X, side=Tk.TOP)
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
@@ -74,12 +73,12 @@ class InitialWindow(Tk.Tk):
         self.error.pack_forget()
         self.newFrame.destroy()
         self.newFrame = Tk.Frame(self.baseFrame)
-        self.newFrame.pack(side=Tk.BOTTOM)
+        self.newFrame.pack(side=Tk.BOTTOM, expand=True)
         path = tkFileDialog.askopenfilename()
         extension = path[path.rfind("."):]
         print extension
-        if extension in self.settings["Non Binary Extensions"]:
-            instructions = Tk.Label(self.newFrame, text="The first 10 lines of your data are displayed below.\n")
+        if extension != ".npy":  # in self.settings["Non Binary Extensions"]:
+            instructions = Tk.Label(self.newFrame, text="The first 10 lines of your data are displayed below.")
             instructions.pack()
             lines = []
             with open(path) as f:
@@ -89,13 +88,17 @@ class InitialWindow(Tk.Tk):
                     lines.append(line)
                     if i == 10:
                         break
-            regex = r'\d+\.\d+'
-            numbers = re.findall(regex, firstline)
+            regex = r'-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?|\w+'
+            try:
+                numbers = re.findall(regex, firstline)
+            except NameError:
+                self.error.pack()
+                raise
             tree = ttk.Treeview(self.newFrame, height=10)
             tree.pack()
             cols = ()
             style = ttk.Style(self)
-            style.configure("Treeview", rowheight=50)
+            style.configure("Treeview", rowheight=int(.3 * self.settings["DPI"]))
             for i in range(len(numbers)):
                 cols += tuple(str(i))
                 # tree.heading(str(i), text="Column")
@@ -104,21 +107,62 @@ class InitialWindow(Tk.Tk):
                 tree.heading(str(i), text="Column %d" % i)
             for i, l in enumerate(lines):
                 tree.insert("", "end", text="Line %d" % i, values=re.findall(regex, l))
-        loading = Tk.Label(self.newFrame, text="Loading data to file...")
+            xFrame = Tk.Frame(self.newFrame)
+            xFrame.pack(expand=True)
+            xLabel = Tk.Label(xFrame, text="X-Data Column: ")
+            xLabel.pack(side=Tk.LEFT)
+            xEntry = Tk.Entry(xFrame, width=2)
+            xEntry.insert(0, "0")
+            xEntry.pack(side=Tk.RIGHT)
+            yFrame = Tk.Frame(self.newFrame)
+            yFrame.pack(expand=True)
+            yLabel = Tk.Label(yFrame, text="Y-Data Column: ")
+            yLabel.pack(side=Tk.LEFT)
+            yEntry = Tk.Entry(yFrame, width=2)
+            yEntry.insert(0, "1")
+            yEntry.pack(side=Tk.RIGHT)
+            headerVal = Tk.IntVar()
+            headerVal.set(0)
+            Tk.Checkbutton(self.newFrame, text="Data Contains Column Headers", variable=headerVal).pack()
+            cleanVal = Tk.IntVar()
+            cleanVal.set(1)
+            Tk.Checkbutton(self.newFrame, text="Clean infs and NaNs (recommended)", variable=cleanVal).pack()
+            chunkVal = Tk.IntVar()
+            chunkVal.set(1)
+            Tk.Checkbutton(self.newFrame, text="Read data in chunks (recommended)", variable=chunkVal).pack()
+            Tk.Button(self.newFrame, text="Load", command=lambda: self.load(
+                path, xEntry.get(), yEntry.get(), headerVal.get(), cleanVal.get(), chunkVal.get())).pack()
+        else:
+            self.load(path, shouldChunk=False)
+
+    def load(self, path, xCol=0, yCol=1, hasHeaders=False, shouldClean=True, shouldChunk=True):
+        self.newFrame.destroy()
+        self.newFrame = Tk.Frame(self.baseFrame)
+        self.newFrame.pack(side=Tk.BOTTOM)
+        try:
+            xCol = int(xCol)
+            yCol = int(yCol)
+        except ValueError:
+            self.error.pack()
+            raise
+        loading = Tk.Label(self.newFrame, text="Loading data...")
         loading.pack()
-        progress = ttk.Progressbar(self.newFrame, length=self.defaultWidth * .5, mode="indeterminate", maximum=10)
-        progress.pack()
+        progress = None
+        if shouldChunk:
+            progress = ttk.Progressbar(self.newFrame, length=self.defaultWidth * .5, mode="indeterminate", maximum=10)
+            progress.pack()
         self.update()
         try:
             data = MainWindow.loadData(path, chunkSize=self.settings['Load Chunk Size'], tkProgress=progress,
-                                       tkRoot=self)
+                                       tkRoot=self, xCol=xCol, yCol=yCol, header=hasHeaders, clean=shouldClean,
+                                       chunkRead=shouldChunk)
         except (ValueError, IOError):
             loading.pack_forget()
-            progress.pack_forget()
+            if progress: progress.pack_forget()
             self.error.pack()
             raise
         loading.pack_forget()
-        progress.pack_forget()
+        if progress: progress.pack_forget()
         Tk.Label(self.newFrame, text="How much data would you like to use?").pack()
         tkVar = Tk.IntVar()
         start = Tk.Entry(self.newFrame)

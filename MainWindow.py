@@ -15,6 +15,7 @@ from functools import partial
 import tkFileDialog
 import math
 import json
+import shutil
 import pickle
 import h5py
 
@@ -56,6 +57,7 @@ class MainWindow(Tk.Tk):
 
     def _quit(self):
         """Closes the MainWindow"""
+        if os.path.exists("/tmp"): shutil.rmtree("/tmp")
         self.root.quit()
         self.root.destroy()
 
@@ -90,7 +92,7 @@ class MainWindow(Tk.Tk):
         npz["arr_0"] = 2d array of graph data grouped by axis
         and npz["arr_1"] = associated metadata in dict at corresponding index for each graph
         """
-        proj = np.load(path, mmap_mode="r+")
+        proj = np.load(path)  # , mmap_mode="r+")
         rawData = proj[0]
         metaData = proj[1]
         if destroyTk:
@@ -116,7 +118,8 @@ class MainWindow(Tk.Tk):
         key_press_handler(event, self.canvas, self.toolbar)
 
     @staticmethod
-    def loadData(path, clean=True, chunkRead=True, chunkSize=100000, tkProgress=None, tkRoot=None):
+    def loadData(path, clean=True, chunkRead=True, chunkSize=100000, tkProgress=None, tkRoot=None, xCol=0, yCol=1,
+                 header=None):
         """Loads data depending on file type, returning the resulting numpy array.
 
         With clean=True, removes non-finite values from the data stored at the path
@@ -156,13 +159,14 @@ class MainWindow(Tk.Tk):
                     #  mmap = hd.create_group("Original").create_dataset("Raw", (numLines, 2), dtype=np.float64)
                 # Parse "chunk size" number points at a time to avoid overflow
                 n = 0
-                for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[0, 1], header=None):
+                for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[xCol, yCol],
+                                           header=header):
                     if tkProgress and tkRoot:
                         tkProgress.step()
                         tkRoot.update()
                     mmap[n: n + chunk.shape[0]] = chunk.values
                     n += chunk.shape[0]
-                    print "Chunk read"
+                    #  print "Chunk read"
                 xData, yData = np.trim_zeros(mmap[:,0]), np.trim_zeros(mmap[:,1])
             else:
                 xData, yData = np.loadtxt(path, unpack=True, dtype=np.float64)
