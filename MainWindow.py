@@ -65,8 +65,8 @@ class MainWindow(Tk.Tk):
 
     def saveProject(self):
         """Saves this window's graphs and their metadata"""
-        path = tkFileDialog.asksaveasfilename(defaultextension=".gee",
-                                              filetypes=[("Gravitation and Earth Exploration", ".gee")])
+        path = tkFileDialog.asksaveasfilename(defaultextension=".npy",
+                                              filetypes=[("Numpy Array", ".npy")])
         if not path: return
         rawdata = []
         metadata = []
@@ -79,11 +79,8 @@ class MainWindow(Tk.Tk):
                 rawdata[i][j] = graph.getRawData()
                 metadata[i][j] = graph.getMetaData()
         print "Length of raw data %d" % len(rawdata), metadata
-        # np.savez(path, np.array(rawdata), np.array(metadata))
-        rawdata = np.array(rawdata)
-        rawdata.dump(path)
-        metadata = np.array(metadata)
-        metadata.dump(path)
+        proj = np.array([rawdata, metadata])
+        np.save(path, proj)
 
     @staticmethod
     def loadProject(path, destroyTk=None):
@@ -93,8 +90,9 @@ class MainWindow(Tk.Tk):
         npz["arr_0"] = 2d array of graph data grouped by axis
         and npz["arr_1"] = associated metadata in dict at corresponding index for each graph
         """
-        rawData = np.load(path)
-        metaData = np.load(path)
+        proj = np.load(path, mmap_mode="r+")
+        rawData = proj[0]
+        metaData = proj[1]
         if destroyTk:
             destroyTk.quit()
             destroyTk.destroy()
@@ -153,8 +151,9 @@ class MainWindow(Tk.Tk):
                 if not os.path.exists("/tmp"):
                     os.makedirs("/tmp")
                 with open("/tmp/arr.npy", "w+") as tempFile:
-                    hd = h5py.File("project.hdf5")  # open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
-                    mmap = hd.create_group("Original").create_dataset("Raw", (numLines, 2), dtype=np.float64)
+                    mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
+                    #  hd = h5py.File("project.hdf5")
+                    #  mmap = hd.create_group("Original").create_dataset("Raw", (numLines, 2), dtype=np.float64)
                 # Parse "chunk size" number points at a time to avoid overflow
                 n = 0
                 for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[0, 1], header=None):

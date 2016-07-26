@@ -20,7 +20,7 @@ class InitialWindow(Tk.Tk):
         "DPI": 150,
         "Style": ["ggplot"],
         "User Font Size": 14,
-        "Icon Location": r'C:\Users\thoma\Downloads\WIZ.ico',
+        "Icon Location": r'res\WIZ.ico',
         "Non Binary Extensions": [".txt", ".csv"]
     }
 
@@ -56,7 +56,7 @@ class InitialWindow(Tk.Tk):
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
         self.error.pack_forget()
-        path = tkFileDialog.askopenfilename(filetypes=[("Gravitation and Earth Exploration", ".gee")])
+        path = tkFileDialog.askopenfilename(filetypes=[("NumPy Array", ".npy")])
         loading = Tk.Label(self.baseFrame, text="Loading...")
         loading.pack()
         self.update()
