@@ -21,6 +21,7 @@ class Graph:
         when displaying a graph. Without one matplotlib.pyplot.plot() is used directly when plotting.
         Creates a point at (0, 0) by default.
         """
+        print "Graph %s created (title: %s)" % (str(self), str(title) if title else "-Not yet named-")
         self.window = window
         self.title = title
         self.xLabel = xLabel
@@ -60,7 +61,7 @@ class Graph:
         """Returns a dict of all class data which is not a function and not a numpy array"""
         return {key: value for key, value in self.__dict__.items() if not key.startswith("__") and
                 not callable(key) and not (key == "rawXData" or key == "rawYData" or key == "graphWindow" or
-                                           key == "window" or key == "subplot")}
+                                           key == "window" or key == "subplot" or key == "radioVar")}
 
     def useMetaFrom(self, other):
         """Sets the metadata of this graph to the metadata of other"""
@@ -150,8 +151,8 @@ class Graph:
         if maxPoints and numPts > maxPoints:
             step = math.ceil(numPts / maxPoints)
             print "Using step size: %d" % step
-            xVals = self.getScaledMagData()[0][::step]
-            yVals = self.getScaledMagData()[1][::step]
+            xVals = self.getScaledMagData()[0][::int(step)]
+            yVals = self.getScaledMagData()[1][::int(step)]
             print "Points plotted: %d" % len(xVals)
         else:
             xVals, yVals = self.getScaledMagData()
@@ -169,7 +170,7 @@ class Graph:
         elif mode == "loglog":
             (plt if not sub else sub).loglog(xVals, yVals)
         else:
-            (plt if not sub else sub).plot(xVals, yVals)  # , ",")
+            (plt if not sub else sub).plot(xVals, yVals)
         if not sub:
             plt.xlabel((str(self.getXLabel()) + "x10^" + str(xMag) if xMag != 0 else str(self.getXLabel())))
             plt.ylabel((str(self.getYLabel()) + "x10^" + str(yMag) if yMag != 0 else str(self.getYLabel())))
@@ -194,7 +195,6 @@ class Graph:
             fitFunction(self.getScaledMagData(forceAutoScale=True)[0], *fitParams)) * 10 ** (magAdjustment + setYMag),
                      autoScaleMagnitude=self.autoScaleMagnitude, title="Fit for " + self.title, xLabel=self.xLabel,
                      yLabel=self.yLabel)
-        # (raw vs. scaled - consult)
 
     def getFFT(self):
         """Returns a Graph of the Single-Sided Amplitude Spectrum of y(t)"""
@@ -237,8 +237,8 @@ class Graph:
         """
         end = len(self.getRawData()[0]) - 1 if not end else end
         return Graph(self.window, title=str(self.title) + " from point " + str(int(begin)) + " to " + str(int(end)),
-                     xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][begin:end:step],
-                     rawYData=self.getRawData()[1][begin:end:step], autoScaleMagnitude=self.autoScaleMagnitude)
+                     xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][int(begin):int(end):int(step)],
+                     rawYData=self.getRawData()[1][int(begin):int(end):int(step)], autoScaleMagnitude=self.autoScaleMagnitude)
 
     def onClick(self, event):
         """Opens this Graph's GraphWindow if the event is within its axes and was a double click"""
@@ -274,9 +274,11 @@ class Graph:
         except AttributeError as a:
             raise MathExpression.ParseFailure(str(graph), a)
 
+    '''
     def __repr__(self):
         """Returns the Graph's title"""
         return str(self.title)
+    '''
 
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.

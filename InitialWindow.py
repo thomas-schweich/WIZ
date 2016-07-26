@@ -6,6 +6,7 @@ import tkFileDialog
 import numpy as np
 import json
 import os
+import re
 
 
 class InitialWindow(Tk.Tk):
@@ -17,9 +18,10 @@ class InitialWindow(Tk.Tk):
         "Plot Chunk Size": 100000,
         "Max Preview Points": 100000,
         "DPI": 150,
-        "Style": "ggplot",
+        "Style": ["ggplot"],
         "User Font Size": 14,
-        "Icon Location": r'C:\Users\thoma\Downloads\WIZ.ico'
+        "Icon Location": r'C:\Users\thoma\Downloads\WIZ.ico',
+        "Non Binary Extensions": [".txt", ".csv"]
     }
 
     def __init__(self, *args, **kwargs):
@@ -54,31 +56,69 @@ class InitialWindow(Tk.Tk):
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
         self.error.pack_forget()
-        path = tkFileDialog.askopenfilename(filetypes=[("Numpy Zipped", ".npz")])
+        path = tkFileDialog.askopenfilename(filetypes=[("Gravitation and Earth Exploration", ".gee")])
+        loading = Tk.Label(self.baseFrame, text="Loading...")
+        loading.pack()
+        self.update()
         try:
             MainWindow.loadProject(path, destroyTk=self)
             # window.lift()
             # window.mainloop()
         except IOError:
+            loading.pack_forget()
             self.error.pack()
+            raise
 
     def loadRawData(self):
-        """Loads data from a text file using MainWindow.loadData and prompts the user for a slice"""
+        """Loads data from a text file using MainWindow.loadData() and prompts the user for a slice"""
         self.error.pack_forget()
         self.newFrame.destroy()
         self.newFrame = Tk.Frame(self.baseFrame)
         self.newFrame.pack(side=Tk.BOTTOM)
         path = tkFileDialog.askopenfilename()
-        # loading = ttk.Progressbar(newFrame)
-        # loading.pack()
-        # loading.start(interval=10)
+        extension = path[path.rfind("."):]
+        print extension
+        if extension in self.settings["Non Binary Extensions"]:
+            instructions = Tk.Label(self.newFrame, text="The first 10 lines of your data are displayed below.\n")
+            instructions.pack()
+            lines = []
+            with open(path) as f:
+                for i, line in enumerate(f):
+                    if i == 0:
+                        firstline = line
+                    lines.append(line)
+                    if i == 10:
+                        break
+            regex = r'\d+\.\d+'
+            numbers = re.findall(regex, firstline)
+            tree = ttk.Treeview(self.newFrame, height=10)
+            tree.pack()
+            cols = ()
+            style = ttk.Style(self)
+            style.configure("Treeview", rowheight=50)
+            for i in range(len(numbers)):
+                cols += tuple(str(i))
+                # tree.heading(str(i), text="Column")
+            tree["columns"] = cols
+            for i in range(len(numbers)):
+                tree.heading(str(i), text="Column %d" % i)
+            for i, l in enumerate(lines):
+                tree.insert("", "end", text="Line %d" % i, values=re.findall(regex, l))
+        loading = Tk.Label(self.newFrame, text="Loading data to file...")
+        loading.pack()
+        progress = ttk.Progressbar(self.newFrame, length=self.defaultWidth * .5, mode="indeterminate", maximum=10)
+        progress.pack()
+        self.update()
         try:
-            data = MainWindow.loadData(path, chunkSize=self.settings['Load Chunk Size'])
+            data = MainWindow.loadData(path, chunkSize=self.settings['Load Chunk Size'], tkProgress=progress,
+                                       tkRoot=self)
         except (ValueError, IOError):
+            loading.pack_forget()
+            progress.pack_forget()
             self.error.pack()
-            return
-        # loading.stop()
-        # loading.destroy()
+            raise
+        loading.pack_forget()
+        progress.pack_forget()
         Tk.Label(self.newFrame, text="How much data would you like to use?").pack()
         tkVar = Tk.IntVar()
         start = Tk.Entry(self.newFrame)
@@ -107,12 +147,11 @@ class InitialWindow(Tk.Tk):
         end = float(end)
         # By index
         if tkVar.get() == 0:
-            newDat = data[0][begin:end], data[1][begin:end]
+            newDat = data[0][int(begin):int(end)], data[1][int(begin):int(end)]
         # By x value
         else:  # elif tkVar.get() == 1:
-            newBegin, newEnd = \
-                np.searchsorted(data[0], np.array([np.float64(begin), np.float64(end)]))
-            newDat = data[0][newBegin:newEnd], data[1][newBegin, newEnd]
+            newBegin, newEnd = np.searchsorted(data[0], np.array([np.float64(begin), np.float64(end)]))
+            newDat = data[0][newBegin:newEnd], data[1][newBegin:newEnd]
         self.quit()
         self.destroy()
         win = MainWindow()

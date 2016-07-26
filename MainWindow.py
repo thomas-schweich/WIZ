@@ -2,10 +2,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import sys
 import os
-if sys.version_info[0] < 3:
-    import Tkinter as Tk
-else:
-    import tkinter as Tk
+import Tkinter as Tk
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.format import open_memmap
@@ -18,6 +15,8 @@ from functools import partial
 import tkFileDialog
 import math
 import json
+import pickle
+import h5py
 
 
 class MainWindow(Tk.Tk):
@@ -65,11 +64,10 @@ class MainWindow(Tk.Tk):
         self.graphs = graphs
 
     def saveProject(self):
-        """Saves this window's graphs and """
-        path = tkFileDialog.asksaveasfilename(defaultextension=".npz",
-                                              filetypes=[("Numpy", ".npz")])
+        """Saves this window's graphs and their metadata"""
+        path = tkFileDialog.asksaveasfilename(defaultextension=".gee",
+                                              filetypes=[("Gravitation and Earth Exploration", ".gee")])
         if not path: return
-        #with open(path, "a+") as p:
         rawdata = []
         metadata = []
         for i, axis in enumerate(self.graphs):
@@ -81,7 +79,11 @@ class MainWindow(Tk.Tk):
                 rawdata[i][j] = graph.getRawData()
                 metadata[i][j] = graph.getMetaData()
         print "Length of raw data %d" % len(rawdata), metadata
-        np.savez(path, np.array(rawdata), np.array(metadata))
+        # np.savez(path, np.array(rawdata), np.array(metadata))
+        rawdata = np.array(rawdata)
+        rawdata.dump(path)
+        metadata = np.array(metadata)
+        metadata.dump(path)
 
     @staticmethod
     def loadProject(path, destroyTk=None):
@@ -91,8 +93,8 @@ class MainWindow(Tk.Tk):
         npz["arr_0"] = 2d array of graph data grouped by axis
         and npz["arr_1"] = associated metadata in dict at corresponding index for each graph
         """
-        b = np.load(path, mmap_mode="r+")
-        rawData, metaData = b["arr_0"], b["arr_1"]
+        rawData = np.load(path)
+        metaData = np.load(path)
         if destroyTk:
             destroyTk.quit()
             destroyTk.destroy()
@@ -116,7 +118,7 @@ class MainWindow(Tk.Tk):
         key_press_handler(event, self.canvas, self.toolbar)
 
     @staticmethod
-    def loadData(path, clean=True, chunkRead=True, chunkSize=100000):
+    def loadData(path, clean=True, chunkRead=True, chunkSize=100000, tkProgress=None, tkRoot=None):
         """Loads data depending on file type, returning the resulting numpy array.
 
         With clean=True, removes non-finite values from the data stored at the path
@@ -151,10 +153,14 @@ class MainWindow(Tk.Tk):
                 if not os.path.exists("/tmp"):
                     os.makedirs("/tmp")
                 with open("/tmp/arr.npy", "w+") as tempFile:
-                    mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
+                    hd = h5py.File("project.hdf5")  # open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
+                    mmap = hd.create_group("Original").create_dataset("Raw", (numLines, 2), dtype=np.float64)
                 # Parse "chunk size" number points at a time to avoid overflow
                 n = 0
                 for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[0, 1], header=None):
+                    if tkProgress and tkRoot:
+                        tkProgress.step()
+                        tkRoot.update()
                     mmap[n: n + chunk.shape[0]] = chunk.values
                     n += chunk.shape[0]
                     print "Chunk read"

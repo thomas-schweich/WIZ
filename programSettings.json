@@ -1,9 +1,10 @@
 {
   "Load Chunk Size": 100000,
   "Style": "ggplot",
-  "User Font Size": 14,
-  "Icon Location": "res\\WIZ.ico",
+  "Non Binary Extensions": [".txt", ".csv"],
   "Max Preview Points": 100000,
+  "Icon Location": "C:\\Users\\thoma\\Downloads\\WIZ.ico",
+  "User Font Size": 14,
   "Plot Chunk Size": 100000,
   "DPI": 150
 }
