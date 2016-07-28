@@ -3,6 +3,19 @@ import collections
 import numpy as np
 import math
 import re
+import functools
+
+
+def forceReversible(func):
+    """Tries reversing the arguments of the two argument function func if the original raises a TypeError"""
+    @functools.wraps(func)
+    def wrapper(arg0, arg1):
+        print "Arg 0: %s\nArg 1: %s" % (str(arg0), str(arg1))
+        try:
+            return func(arg0, arg1)
+        except TypeError:
+            return func(arg1, arg0)
+    return wrapper
 
 
 class MathExpression:
@@ -27,8 +40,8 @@ class MathExpression:
         return {key: value}
 
     operators = collections.OrderedDict(
-        (("(", None), (")", None), (",", None), ("^", operator.pow), ("/", operator.div),
-         ("*", operator.mul), ("+", operator.add), ("-", operator.sub)))
+        (("(", None), (")", None), (",", None), ("^", forceReversible(operator.pow)), ("/", forceReversible(operator.div)),
+         ("*", forceReversible(operator.mul)), ("+", forceReversible(operator.add)), ("-", forceReversible(operator.sub))))
     modules = (np, math)
 
     def __init__(self, expression, variables=None, operators=operators, modules=modules, fallbackFunc=None):
@@ -101,7 +114,6 @@ class MathExpression:
                         self.loops += 1
                         if part == op:  # Changing to allow for equal level operators
                             newLocation = newExp.index(part)
-                            # ^ Check - Should be ok though since previous operators are removed
                             prevIndex = newLocation - 1
                             nextIndex = newLocation + 1
                             try:
@@ -110,7 +122,10 @@ class MathExpression:
                             except IndexError as i:
                                 raise MathExpression.ParseFailure(part, i)
                             print "Combining %s with %s using '%s' operator" % (str(prev), str(nxt), str(part))
-                            solution = self.operators[part](prev, nxt)
+                            if not (isinstance(prev, np.ndarray) and not isinstance(nxt, np.ndarray)):
+                                solution = self.operators[part](prev, nxt)
+                            else:
+                                raise MathExpression.SyntaxError(prev)
                             print "Solution: " + str(solution)
                             del newExp[prevIndex:nextIndex + 1]
                             newExp.insert(prevIndex, solution)
@@ -126,7 +141,7 @@ class MathExpression:
                     else:
                         print "Replacing expression only (parenthesis not found)"
                         del exp[leftInner:rightInner]
-                    exp.insert(leftInner-1, newExp[0]) # -1s
+                    exp.insert(leftInner-1, newExp[0])
                 else:
                     raise MathExpression.SyntaxError(newExp)
                 print "New Expression: %s" % str(exp)
@@ -205,3 +220,21 @@ class MathExpression:
 
         def __str__(self):
             return str(self.__repr__())
+
+
+def limit(max_=None):
+    """Return decorator that limits allowed returned values."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            ret = func(*args, **kwargs)
+            try:
+                mag = abs(ret)
+            except TypeError:
+                pass  # not applicable
+            else:
+                if mag > max_:
+                    raise ValueError(ret)
+            return ret
+        return wrapper
+    return decorator

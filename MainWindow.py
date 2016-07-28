@@ -16,6 +16,7 @@ import tkFileDialog
 import math
 import json
 import shutil
+from GraphSelector import GraphSelector
 import pickle
 import h5py
 
@@ -67,8 +68,8 @@ class MainWindow(Tk.Tk):
 
     def saveProject(self):
         """Saves this window's graphs and their metadata"""
-        path = tkFileDialog.asksaveasfilename(defaultextension=".npy",
-                                              filetypes=[("Numpy Array", ".npy")])
+        path = tkFileDialog.asksaveasfilename(defaultextension=".gee.npy",
+                                              filetypes=[("WIZ Project", ".gee.npy")])
         if not path: return
         rawdata = []
         metadata = []
@@ -95,9 +96,6 @@ class MainWindow(Tk.Tk):
         proj = np.load(path)  # , mmap_mode="r+")
         rawData = proj[0]
         metaData = proj[1]
-        if destroyTk:
-            destroyTk.quit()
-            destroyTk.destroy()
         graphs = []
         window = MainWindow()
         for i in range(len(rawData)):
@@ -110,7 +108,12 @@ class MainWindow(Tk.Tk):
                     setattr(gr, att, metaData[i][j][att])
                 graphs[i].append(gr)
         window.setGraphs(graphs)
+        print "Graphs: %s" % str(window.graphs)
         window.plotGraphs()
+        if destroyTk:
+            destroyTk.quit()
+            destroyTk.destroy()
+        window.lift()
         window.mainloop()
 
     def on_key_event(self, event):
@@ -141,7 +144,7 @@ class MainWindow(Tk.Tk):
                         else:
                             lineSize += sys.getsizeof(line)
                     '''
-                    numLines = sum(1 for line in f)
+                    numLines = sum(1 for _ in f)
                     f.seek(0, 0)
                 '''
                 if lineSize:
@@ -240,46 +243,7 @@ class MainWindow(Tk.Tk):
                         return
 
     def promptSelect(self, graphsInAxis):
-        """Creates a window prompting the user to select a graph from the axis if len(graphsInAxis) > 1
-
-        otherwise opens the graph's GraphWindow"""
-        graphsInAxis = [gr for gr in graphsInAxis if gr.isShown()]
-        print "Graphs in axis: %s" % str(graphsInAxis)
-        graphsInAxis[0].radioVar = Tk.IntVar()  # Attached to a persistent object b/c Tkinter garbage collection bug
-        if len(graphsInAxis) > 1:
-            window = Tk.Toplevel()
-            Tk.Label(window, text="Available Graphs on this axis:").pack()
-            for i, graph in enumerate(graphsInAxis):
-                frame = Tk.Frame(window)
-                frame.pack(fill=Tk.X)
-                Tk.Button(frame, text=str(graph.title),
-                          command=partial(self.openGrWinFromDialogue, graph, window)).pack(fill=Tk.X, expand=True,
-                                                                                           side=Tk.LEFT)
-                radiobutton = Tk.Radiobutton(frame, variable=graphsInAxis[0].radioVar, value=i,
-                                             command=partial(self.setMaster, graph, graphsInAxis))
-                if graph.master:
-                    radiobutton.select()
-                else:
-                    radiobutton.deselect()
-                radiobutton.pack(side=Tk.RIGHT)
-
-        else:
-            graphsInAxis[0].openWindow()
-
-    def setMaster(self, graph, graphsInAxis):
-        print "setMaster() called"
-        for g in graphsInAxis:
-            if g.master:
-                print "%s was master" % str(g)
-            g.master = False
-        graph.master = True
-        self.plotGraphs()
-
-    @staticmethod
-    def openGrWinFromDialogue(graph, window):
-        """Opens graph's GraphWindow and destroys window"""
-        graph.openWindow()
-        window.destroy()
+        GraphSelector(self, graphsInAxis).populate()
 
     def plotGraphs(self):
         """Plots all graphs in the MainWindows .graphs list, creating a button for each which isn't shown"""

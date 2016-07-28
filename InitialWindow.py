@@ -55,7 +55,7 @@ class InitialWindow(Tk.Tk):
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
         self.error.pack_forget()
-        path = tkFileDialog.askopenfilename(filetypes=[("NumPy Array", ".npy")])
+        path = tkFileDialog.askopenfilename(filetypes=[("WIZ Project", ".gee.npy")])
         loading = Tk.Label(self.baseFrame, text="Loading...")
         loading.pack()
         self.update()
@@ -63,7 +63,7 @@ class InitialWindow(Tk.Tk):
             MainWindow.loadProject(path, destroyTk=self)
             # window.lift()
             # window.mainloop()
-        except IOError:
+        except (IOError, TypeError):
             loading.pack_forget()
             self.error.pack()
             raise

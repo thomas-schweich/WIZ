@@ -292,7 +292,7 @@ class Graph:
             g.setRawData((self.getRawData()[0], self.getRawData()[1] - other.getRawData()[1]))
             g.setTitle(self.getTitle() + " - " + str(other.getTitle()))
             return g
-        elif isinstance(other, Number):
+        elif isinstance(other, Number) or isinstance(other, np.ndarray):
             g = Graph(self.window)
             g.__dict__.update(self.getMetaData())
             g.setRawData((self.getRawData()[0], self.getRawData()[1] - other))
@@ -312,7 +312,7 @@ class Graph:
             g.setRawData((self.getRawData()[0], self.getRawData()[1] + other.getRawData()[1]))
             g.setTitle(self.getTitle() + " + " + str(other.getTitle()))
             return g
-        elif isinstance(other, Number):
+        elif isinstance(other, Number) or isinstance(other, np.ndarray):
             g = Graph(self.window)
             g.__dict__.update(self.getMetaData())
             g.setRawData((self.getRawData()[0], self.getRawData()[1] + other))
@@ -332,7 +332,7 @@ class Graph:
             g.setRawData((self.getRawData()[0], self.getRawData()[1] * other.getRawData()[1]))
             g.setTitle(self.getTitle() + " * " + str(other.getTitle()))
             return g
-        elif isinstance(other, Number):
+        elif isinstance(other, Number) or isinstance(other, np.ndarray):
             g = Graph(self.window)
             g.__dict__.update(self.getMetaData())
             g.setRawData((self.getRawData()[0], self.getRawData()[1] * other))
@@ -340,6 +340,9 @@ class Graph:
             return g
         else:
             return NotImplemented
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
     def __div__(self, other):
         """Divides the y data of two graphs and returns the resulting Graph
@@ -352,7 +355,7 @@ class Graph:
             g.setRawData((self.getRawData()[0], self.getRawData()[1] / other.getRawData()[1]))
             g.setTitle(self.getTitle() + " / " + str(other.getTitle()))
             return g
-        elif isinstance(other, Number):
+        elif isinstance(other, Number) or isinstance(other, np.ndarray):
             g = Graph(self.window)
             g.__dict__.update(self.getMetaData())
             g.setRawData((self.getRawData()[0], self.getRawData()[1] / other))
@@ -372,7 +375,7 @@ class Graph:
             g.setRawData((self.getRawData()[0], np.power(self.getRawData()[1], other.getRawData()[1])))
             g.setTitle(self.getTitle() + " ^ " + str(other.getTitle()))
             return g
-        elif isinstance(other, Number):
+        elif isinstance(other, Number) or isinstance(other, np.ndarray):
             g = Graph(self.window)
             g.__dict__.update(self.getMetaData())
             g.setRawData((self.getRawData()[0], np.square(
