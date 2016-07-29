@@ -44,7 +44,9 @@ class MainWindow(Tk.Tk):
         self.bottomFrame = Tk.Frame(self)
         self.bottomFrame.pack(side=Tk.BOTTOM)
         self.saveButton = Tk.Button(self.bottomFrame, text="Save", command=self.saveProject)
-        self.saveButton.pack()
+        self.loadButton = Tk.Button(self.bottomFrame, text="Load More Raw Data", command=self.loadRaw)
+        self.saveButton.pack(side=Tk.LEFT)
+        self.loadButton.pack(side=Tk.RIGHT)
         matplotlib.rcParams["agg.path.chunksize"] = self.settings["Plot Chunk Size"]
         self.fig = Figure(figsize=(5, 4), dpi=self.settings['DPI'])
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
@@ -181,6 +183,10 @@ class MainWindow(Tk.Tk):
             yData = yData[finitePoints]
         return xData, yData
         # TODO .sac files, HDF5 format
+
+    def loadRaw(self):
+        from InitialWindow import InitialWindow
+        InitialWindow(win=self)
 
     def addGraph(self, graph, parent=None, plot=True):
         """Adds a graph to this MainWindow's .graphs list, plotting it unless plot is set to false"""

@@ -23,7 +23,7 @@ class InitialWindow(Tk.Tk):
         "Icon Location": r'res\WIZ.ico'
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, win=None, *args, **kwargs):
         # noinspection PyCallByClass,PyTypeChecker
         Tk.Tk.__init__(self, *args, **kwargs)
         # Load settings. If they don't exist, create default settings file.
@@ -39,18 +39,20 @@ class InitialWindow(Tk.Tk):
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .5
         self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
                                        0))
+        self.win = win
         self.baseFrame = Tk.Frame(master=self)
         self.baseFrame.pack(fill=Tk.X, side=Tk.TOP)
         self.newFrame = Tk.Frame(self.baseFrame)
         self.error = Tk.Label(self.baseFrame, text="Invalid selection", fg="red")
         text = Tk.Label(self.baseFrame, text="Welcome to WIZ")
         text.pack()
-        loadButton = ttk.Button(self.baseFrame, text="Load Project", command=self.loadProject)
-        loadButton.pack(fill=Tk.X, side=Tk.TOP)
+        if not self.win:
+            loadButton = ttk.Button(self.baseFrame, text="Load Project", command=self.loadProject)
+            loadButton.pack(fill=Tk.X, side=Tk.TOP)
+            blankButton = ttk.Button(self.baseFrame, text="New Blank Project", command=self.createBlankProject)
+            blankButton.pack(fill=Tk.X, side=Tk.TOP)
         rawButton = ttk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
         rawButton.pack(fill=Tk.X, side=Tk.TOP)
-        blankButton = ttk.Button(self.baseFrame, text="New Blank Project", command=self.createBlankProject)
-        blankButton.pack(fill=Tk.X, side=Tk.TOP)
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
@@ -72,6 +74,7 @@ class InitialWindow(Tk.Tk):
         """Loads data from a text file using MainWindow.loadData() and prompts the user for a slice"""
         self.error.pack_forget()
         self.newFrame.destroy()
+        self.lift()
         self.newFrame = Tk.Frame(self.baseFrame)
         self.newFrame.pack(side=Tk.BOTTOM, expand=True)
         path = tkFileDialog.askopenfilename()
@@ -134,11 +137,13 @@ class InitialWindow(Tk.Tk):
                 path, xEntry.get(), yEntry.get(), headerVal.get(), cleanVal.get(), chunkVal.get())).pack()
         else:
             self.load(path, shouldChunk=False)
+        self.lift()
 
     def load(self, path, xCol=0, yCol=1, hasHeaders=False, shouldClean=True, shouldChunk=True):
         self.newFrame.destroy()
         self.newFrame = Tk.Frame(self.baseFrame)
         self.newFrame.pack(side=Tk.BOTTOM)
+        self.lift()
         try:
             xCol = int(xCol)
             yCol = int(yCol)
@@ -174,7 +179,7 @@ class InitialWindow(Tk.Tk):
         Tk.Radiobutton(self.newFrame, text="By Index (from 0 to %d)" % len(data[0]), variable=tkVar, value=0).pack()
         Tk.Radiobutton(self.newFrame, text="By x-value (from %d to %d)" % (data[0][0], data[0][-1]), variable=tkVar,
                        value=1).pack()
-        Tk.Button(self.newFrame, text="Create Project",
+        Tk.Button(self.newFrame, text="Create Project" if not self.win else "Add Graph",
                   command=lambda: self.sliceData(data, tkVar, start.get(), end.get())).pack()
 
     def createBlankProject(self):
@@ -198,12 +203,18 @@ class InitialWindow(Tk.Tk):
             newDat = data[0][newBegin:newEnd], data[1][newBegin:newEnd]
         self.quit()
         self.destroy()
-        win = MainWindow()
-        gr = Graph(window=win, title="Raw Data")
-        gr.setRawData(newDat)
-        win.setGraphs([[gr]])
-        win.plotGraphs()
-        win.mainloop()
+        if self.win:
+            gr = Graph(window=self.win, title="Raw Data")
+            gr.setRawData(newDat)
+            self.win.addGraph(gr)
+            self.win.plotGraphs()
+        else:
+            win = MainWindow()
+            gr = Graph(window=win, title="Raw Data")
+            gr.setRawData(newDat)
+            win.setGraphs([[gr]])
+            win.plotGraphs()
+            win.mainloop()
 
 
 if __name__ == "__main__":
