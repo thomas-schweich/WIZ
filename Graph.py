@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import fft
+from scipy.fftpack import fft
 from scipy.optimize import curve_fit
 from GraphWindow import GraphWindow
 from numbers import Number
@@ -205,7 +205,7 @@ class Graph:
         T = n * sampleTime
         frq = k / T  # two sides frequency range
         frq = frq[range(n / 2)]  # one side frequency range
-        Y = fft(y) / n  # fft computing and normalization
+        Y = fft(y, axis=0) / n  # fft computing and normalization
         Y = Y[range(n / 2)]
         result = Graph(self.window, rawXData=frq, rawYData=abs(Y), title="FFT", xLabel="Freq (Hz)", yLabel="|Y(freq)|")
         result.setGraphMode("loglog")

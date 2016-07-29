@@ -2,13 +2,13 @@ from functools import partial
 import Tkinter as Tk
 
 
-class GraphSelector(Tk.Toplevel):
+class GraphSelector(Tk.Frame):
 
     def __init__(self, rootWindow, graphsInAxis):
         """Creates a window prompting the user to select a graph from the axis if len(graphsInAxis) > 1
 
         otherwise opens the graph's GraphWindow"""
-        Tk.Toplevel.__init__(self, rootWindow)
+        Tk.Frame.__init__(self, rootWindow)
         self.rootWindow = rootWindow
         self.graphsInAxis = [gr for gr in graphsInAxis if gr.isShown()]
         print "Graphs in axis: %s" % str(graphsInAxis)
@@ -17,13 +17,14 @@ class GraphSelector(Tk.Toplevel):
 
     def populate(self):
         if len(self.graphsInAxis) > 1:
+            self.window = Tk.Toplevel(self)
             #self.window = Tk.Toplevel(self.rootWindow)
-            Tk.Label(self, text="Available Graphs on this axis:").pack()
+            Tk.Label(self.window, text="Available Graphs on this axis:").pack()
             for i, graph in enumerate(self.graphsInAxis):
-                frame = Tk.Frame(self)
+                frame = Tk.Frame(self.window)
                 frame.pack(fill=Tk.X)
                 Tk.Button(frame, text=str(graph.title),
-                          command=partial(self.openGrWinFromDialogue, graph, self)).pack(fill=Tk.X, expand=True,
+                          command=partial(self.openGrWinFromDialogue, graph, self.window)).pack(fill=Tk.X, expand=True,
                                                                                                 side=Tk.LEFT)
                 radiobutton = Tk.Radiobutton(frame, variable=self.radioVar, value=i,
                                              command=partial(self.setMaster, graph, self.graphsInAxis))

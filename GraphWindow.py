@@ -31,7 +31,7 @@ class GraphWindow(Tk.Frame):
 
     def __init__(self, graph, *args, **kwargs):
         """A frame object who's open() method creates a Tk.Toplevel (new window) with its contents"""
-        Tk.Frame.__init__(self, *args, **kwargs)
+        Tk.Frame.__init__(self, graph.window, *args, **kwargs)
         with open('programSettings.json', 'r') as settingsFile:
             self.settings = json.load(settingsFile)
         self.widgets = {}
@@ -41,7 +41,7 @@ class GraphWindow(Tk.Frame):
         self.graphSubPlot = None
         self.newSubPlot = None
         self.window = None
-        self.radioVar = Tk.IntVar()
+        self.radioVar = Tk.IntVar(self)
         self.fitBox = None
         self.sliceBox = None
         self.addBox = None
@@ -124,7 +124,7 @@ class GraphWindow(Tk.Frame):
         Tk.Button(self.graphOptionsFrame, text="Save Graph", command=self.saveGraph).pack(fill=Tk.X)
         Tk.Button(self.graphOptionsFrame, text="Save Data", command=self.saveData).pack(fill=Tk.X)
         Tk.Button(self.graphOptionsFrame, text="Delete Graph", command=self.removeGraph).pack(fill=Tk.X)
-        showVal = Tk.IntVar()
+        showVal = Tk.IntVar(self)
         showVal.set(self.graph.isShown())
         Tk.Checkbutton(self.graphOptionsFrame, text="Show", variable=showVal, onvalue=1, offvalue=0,
                        command=lambda: self.showHide(showVal)).pack(fill=Tk.X)
@@ -142,7 +142,7 @@ class GraphWindow(Tk.Frame):
         self.sliceBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Slice Options",
                                        variable=self.radioVar, value=1)
         self.sliceBox.val = 1
-        sliceVar = Tk.IntVar()
+        sliceVar = Tk.IntVar(self)
         self.addWidget(Tk.Radiobutton, parent=self.sliceBox,
                        text="By index (from 0 to " + str(len(self.graph.getRawData()[0])) +
                             ")", variable=sliceVar, value=0)
@@ -170,7 +170,7 @@ class GraphWindow(Tk.Frame):
         graphs = [g for a in self.graph.window.graphs for g in a]
         sameXGraphs = [g for g in graphs if g.isSameX(self.graph)]
         graphTitles = tuple([g.getTitle() for g in sameXGraphs])
-        addDropVar = Tk.StringVar()
+        addDropVar = Tk.StringVar(self)
         addDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
         self.addWidget(Tk.Label, parent=self.addBox, text="By Graph:")
         addDropdown = Tk.OptionMenu(self.optionsFrame, addDropVar, *graphTitles)
@@ -189,7 +189,7 @@ class GraphWindow(Tk.Frame):
         multConstant.insert(0, "Constant")
         self.addWidget(Tk.Button, parent=self.multBox, text="Multiply with constant",
                        command=lambda: self.addMultiplication(float(multConstant.get())))
-        multDropVar = Tk.StringVar()
+        multDropVar = Tk.StringVar(self)
         multDropVar.set(graphTitles[0] if len(graphTitles) > 0 else "")
         self.addWidget(Tk.Label, parent=self.multBox, text="By graph:")
         multDropdown = Tk.OptionMenu(self.optionsFrame, multDropVar, *graphTitles)
@@ -207,14 +207,14 @@ class GraphWindow(Tk.Frame):
         customGraphTitles = tuple([g.getTitle() for g in graphs])
         textBox = self.addWidget(Tk.Text, parent=self.customBox, font=("Mono", self.settings['User Font Size']))
         textBox.insert(Tk.END, "<%s>" % str(self.graph.getTitle()))
-        customDropVar = Tk.StringVar()
+        customDropVar = Tk.StringVar(self)
         customDropVar.set(customGraphTitles[0] if len(customGraphTitles) > 0 else "")
         self.addWidget(Tk.Label, parent=self.customBox, text="Reference y-data of graph:")
         customDropdown = Tk.OptionMenu(self.optionsFrame, customDropVar, *customGraphTitles, command=lambda name:
                        textBox.insert(Tk.INSERT, "<%s>" % str(customGraphTitles[customGraphTitles.index(name)])))
         self.widgets[self.customBox].append(customDropdown)  # Manual addition
-        self.addWidget(Tk.Button, parent=self.customBox, text="Parse Expression",
-                       command=lambda: self.parseExpression(textBox.get(1.0, Tk.END)))
+        parseButton = self.addWidget(Tk.Button, parent=self.customBox, text="Parse Expression")
+        parseButton.configure(command=lambda: self.parseExpression(textBox.get(1.0, Tk.END), parseButton))
 
         # TODO Cases with multiple graphs of the same title
         # TODO Cases without matching graphs
@@ -431,7 +431,7 @@ class GraphWindow(Tk.Frame):
             self.graph.show = True
         self.graph.window.plotGraphs()
 
-    def parseExpression(self, expression):
+    def parseExpression(self, expression, tkButton):
         """Creates a MathExpression with variables for each graph in the project"""
         graphVars = {}
         for axis in self.graph.window.graphs:
@@ -439,12 +439,16 @@ class GraphWindow(Tk.Frame):
                 graphVars[graph.getTitle()] = copy(graph)
         print graphVars
         exp = MathExpression(str(expression), modules=(Graph, np, math), variables=graphVars, fallbackFunc=self.graph.useYForCall)
+        tkButton.config(text="Loading...")
+        self.graph.window.update()
         try:
-            graph = exp.evaluate()
+            exp.evaluate()
+            graph = exp.expression
         except (MathExpression.ParseFailure, MathExpression.SyntaxError) as e:
             tkMessageBox.showwarning("Failed To Parse", "The parser combined the parts of your expression until it "
                                                         "reached the expression below.\n" + str(e))
             self.window.lift()
+            tkButton.config(text="Parse Expression")
             return
         try:
             graph.window = self.graph.window
@@ -452,6 +456,7 @@ class GraphWindow(Tk.Frame):
         except AttributeError:
             tkMessageBox.showinfo("Result", str(graph))
             self.window.lift()
+        tkButton.config(text="Parse Expression")
 
     @staticmethod
     def avoidDuplicates(path, getExtension=False):

@@ -4,6 +4,7 @@ import numpy as np
 import math
 import re
 import functools
+from threading import Thread
 
 
 def forceReversible(func):
@@ -51,6 +52,7 @@ class MathExpression:
         self.fallbackFunc = fallbackFunc
         self.expression = self.genFromString(expression)
         self.loops = 0
+        self.result = None
 
     def genFromString(self, string):
         """Separates string by .operators using regex"""
@@ -60,11 +62,13 @@ class MathExpression:
         print exp
         return exp
 
+    def getEvaluationThread(self):
+        """Returns a Thread who's target is evaluate() which can be started and joined at your leisure"""
+        return Thread(target=self.evaluate())
+
     def evaluate(self):
         """Calls evaluateExpression() on .expression"""
-        ev = self.evaluateExpression(self.expression)
-        print ev
-        return ev
+        self.expression = self.evaluateExpression(self.expression)
 
     def evaluateExpression(self, exp):
         """Recursively evaluates expressions starting with innermost parenthesis, working outwards
