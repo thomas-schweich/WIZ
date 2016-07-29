@@ -137,6 +137,7 @@ class InitialWindow(Tk.Tk):
                 path, xEntry.get(), yEntry.get(), headerVal.get(), cleanVal.get(), chunkVal.get())).pack()
         else:
             self.load(path, shouldChunk=False)
+        self.update()
         self.lift()
 
     def load(self, path, xCol=0, yCol=1, hasHeaders=False, shouldClean=True, shouldChunk=True):
