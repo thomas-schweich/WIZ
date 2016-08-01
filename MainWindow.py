@@ -1,6 +1,5 @@
 import matplotlib
 matplotlib.use("TkAgg")
-import sys
 import os
 import Tkinter as Tk
 import matplotlib.pyplot as plt
@@ -11,14 +10,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 from Graph import Graph
-from functools import partial
 import tkFileDialog
+import FileDialog
 import math
 import json
 import shutil
 from GraphSelector import GraphSelector
-import pickle
-import h5py
 
 
 class MainWindow(Tk.Tk):
@@ -185,7 +182,7 @@ class MainWindow(Tk.Tk):
         # TODO .sac files, HDF5 format
 
     def loadRaw(self):
-        from InitialWindow import InitialWindow
+        from WIZ import InitialWindow
         InitialWindow(win=self)
 
 

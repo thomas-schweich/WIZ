@@ -3,7 +3,11 @@ import ttk
 from Graph import Graph
 from MainWindow import MainWindow
 import tkFileDialog
+import FileDialog
 import numpy as np
+import zmq.utils
+import zmq.utils.jsonapi
+import zmq.utils.strtypes
 import json
 import os
 import re
@@ -17,10 +21,10 @@ class InitialWindow(Tk.Tk):
         "Load Chunk Size": 100000,
         "Plot Chunk Size": 100000,
         "Max Preview Points": 100000,
-        "DPI": 150,
+        "DPI": 100,
         "Style": ["ggplot"],
-        "User Font Size": 14,
-        "Icon Location": r'res\WIZ.ico'
+        "User Font Size": 12,
+        "Icon Location": r'C:\Users\thoma\PycharmProjects\dataManipulation\res\WIZ.ico'
     }
 
     def __init__(self, win=None, *args, **kwargs):
@@ -78,6 +82,9 @@ class InitialWindow(Tk.Tk):
         self.newFrame = Tk.Frame(self.baseFrame)
         self.newFrame.pack(side=Tk.BOTTOM, expand=True)
         path = tkFileDialog.askopenfilename()
+        if not path:
+            self.error.pack()
+            return
         extension = path[path.rfind("."):]
         print extension
         if extension != ".npy":  # in self.settings["Non Binary Extensions"]:

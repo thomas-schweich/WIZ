@@ -395,14 +395,14 @@ def create(xData, yData):
 
 
 def x(graph, index=None):
-    if index:
+    if index is not None:
         return graph.getRawData()[0][index]
     else:
         return graph.getRawData()[0]
 
 
 def y(graph, index=None):
-    if index:
+    if index is not None:
         return graph.getRawData()[1][index]
     else:
         return graph.getRawData()[1]

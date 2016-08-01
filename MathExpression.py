@@ -77,7 +77,11 @@ class MathExpression:
         Note: Order of operations is strict. Equal precedence not yet allowed.
         """
         # TODO Equal operator precedence
-        if len(exp) >= 3:
+        try:
+            isCompleteExp = len(exp) >= 3
+        except TypeError:
+            isCompleteExp = False
+        if isCompleteExp:
             print "-New Starting expression: %s" % str(exp)
             rightInner = exp.index(")") if ")" in exp else len(exp)
             print "Right inner parenthesis index: %d" % rightInner
@@ -153,9 +157,11 @@ class MathExpression:
             print "Length of expression: %d" % len(exp)
             return self.evaluateExpression(exp)
         else:
-            if len(exp) == 1:
+            if not isinstance(exp, list):
                 print "Loops: %d" % self.loops
                 self.loops = 0
+                return exp
+            elif len(exp) == 1:
                 return self._interpret(exp[0])
             else:
                 raise MathExpression.SyntaxError(exp)

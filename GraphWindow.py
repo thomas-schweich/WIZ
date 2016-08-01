@@ -2,11 +2,7 @@ import matplotlib
 
 matplotlib.use('TkAgg')
 import sys
-
-if sys.version_info[0] < 3:
-    import Tkinter as Tk
-else:
-    import tkinter as Tk
+import Tkinter as Tk
 import tkFileDialog
 import tkMessageBox
 import numpy as np
