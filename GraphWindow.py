@@ -53,14 +53,14 @@ class GraphWindow(Tk.Frame):
         self.graphOptionsFrame = None
         self.TransformationOptionsFrame = None
         self.pack()
-        self.isOpen = False
+        self.graph.isOpen = False
 
     def open(self):
         """Opens a graph window only if there isn't already one open for this GraphWindow
 
         Thus only one window per Graph can be open using this method (assuming Graphs only have one GraphWindow)"""
-        if not self.isOpen:
-            self.isOpen = True
+        if not self.graph.isOpen:
+            self.graph.isOpen = True
             self.window = Tk.Toplevel(self)
             self.window.iconbitmap(self.settings["Icon Location"])
             self.window.wm_title(str(self.graph.getTitle()))
@@ -105,7 +105,7 @@ class GraphWindow(Tk.Frame):
             del self.f
         self.widgets = {}
         self.window.destroy()
-        self.isOpen = False
+        self.graph.isOpen = False
 
     def populate(self):
         """Adds all widgets to the window in their proper frames, with proper cascading"""

@@ -185,8 +185,6 @@ class MainWindow(Tk.Tk):
         from WIZ import InitialWindow
         InitialWindow(win=self)
 
-
-
     def addGraph(self, graph, parent=None, plot=True):
         """Adds a graph to this MainWindow's .graphs list, plotting it unless plot is set to false"""
         graphs = [gr for ax in self.graphs for gr in ax]
