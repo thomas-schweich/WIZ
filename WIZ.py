@@ -5,9 +5,6 @@ from MainWindow import MainWindow
 import tkFileDialog
 import FileDialog
 import numpy as np
-import zmq.utils
-import zmq.utils.jsonapi
-import zmq.utils.strtypes
 import json
 import os
 import re

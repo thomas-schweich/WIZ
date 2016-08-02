@@ -12,6 +12,7 @@ setup(
     zipfile=None,
     options={
         'py2exe': {
+            'bundle_files': 3,
             'includes': ['Tkinter',
                          'scipy', 'scipy.special.*', 'scipy.linalg.*', 'scipy.integrate',
                          'scipy.sparse.csgraph._validation'],
