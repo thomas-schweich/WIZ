@@ -10,7 +10,7 @@ WIZ is a data analysis program designed with the purpose of making operations on
 * Right click on WIZ.exe > Send to... > Desktop (create shortcut)
 * Double-click the desktop icon
 
-### Mac and Linux
+#### Mac and Linux
 * Binaries coming soon. Python code requires SciPy, NumPy, Pandas, Tkinter, and Matplotlib.
 
 ### Basic Usage
