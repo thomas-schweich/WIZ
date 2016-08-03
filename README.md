@@ -1,11 +1,12 @@
 # WIZ Is Zippy
 
-WIZ is a data analysis program designed with the purpose of making operations on mid-to-large sized data sets such as slicing, fitting, fourier-transforming, and plotting with Matplotlib simple and quick, with no programming experience required. Extensive documentation can be found [in the wiki](https://github.com/Tominator368/dataManipulation/wiki)
+WIZ is a data analysis program designed with the purpose of making operations on mid-to-large sized data sets such as slicing, fitting, fourier-transforming, and plotting with Matplotlib simple and quick, with no programming experience required. Extensive documentation can be found [in the wiki](https://github.com/Tominator368/dataManipulation/wiki).
 
 ## How To Be a WIZard
+The latest releases of WIZ can be found [here](https://github.com/Tominator368/dataManipulation/releases).
 
 #### Windows
-* Extract the .zip file into a folder of your choice
+* Extract [the .zip file](https://github.com/Tominator368/dataManipulation/releases) into a folder of your choice
 * Scroll near the bottom of the folder
 * Right click on WIZ.exe > Send to... > Desktop (create shortcut)
 * Double-click the desktop icon
@@ -38,7 +39,7 @@ Any operations which cannot be reached through the GUI of the analysis interface
 * `^`, `/`, `*`, `+`, and `-` perform powers, division, multiplication, addition, and subtraction respectively. **READ: Order of operations is currently strictly enforced _in this order_. This means that `3 + 2 / 4` evaluates to `3.5`, not `1.25`**. Additionally, you may group operations using parenthesis as normal, so `(3 + 2) / 4` evaluates to `1.25`.
 * `x(<Graph>[, point_index])` returns only the x-column of `<Graph>`'s data in the form of a NumPy array. If the optional second argument is provided, it returns the float-value at the index of `point_index`.
 * `y(<Graph>[, point_index])` behaves in much the same way as the above function, except it uses the y-column of `<Graph>`'s data.
-* `length(<Graph>)` returns an integer representing the number of coordinates of `<Graph>`. It can also be passed an array, in which case it returns the length of the array.
+* `length(<Graph>)` returns an integer representing the number of coordinates in `<Graph>`. It can also be passed an array, in which case it returns the length of the array.
 * `getFFT(<Graph>)` returns a graph representing the single-sided amplitude spectrum of `<Graph>` who's units are scaled to be compatible with the default scaling of NI LabView.
 
 Any names not recognized by the parser will be looked up in the namespace of [NumPy](http://www.numpy.org/), and failing that, the namespace of Python's [math](https://docs.python.org/2/library/math.html) library. So, for instance, the expression `sin(pi/2)` is equivelant to writing the following expression in python:
