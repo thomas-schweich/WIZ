@@ -52,19 +52,29 @@ For more information, see [WIZ's wiki](https://github.com/Tominator368/dataManip
 WIZ's development was made possible through extensive usage of the following open source projects:
 
 Project: [Python](http://www.python.org/)
+
 License: https://www.python.org/download/releases/2.7/license/
 
+
 Project: [SciPy](https://www.scipy.org/)
+
 License: https://www.scipy.org/scipylib/license.html
 
+
 Project: [Matplotlib](http://matplotlib.org/)
+
 License: http://matplotlib.org/users/license.html
 
+
 Project: [Tcl/Tk](https://www.tcl.tk/)
+
 License: https://www.tcl.tk/software/tcltk/license.html
 
+
 Project: [Pandas](http://pandas.pydata.org/)
+
 License: http://pandas.pydata.org/pandas-docs/stable/overview.html#license
+
 
 Special thanks to Josh Grebler for the clever name & logo.
 
