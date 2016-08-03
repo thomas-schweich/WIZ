@@ -1,6 +1,6 @@
 # WIZ Is Zippy
 
-WIZ is a data analysis program designed with the purpose of making operations on mid-to-large sized data sets such as slicing, fitting, fourier-transforming, and plotting with Matplotlib simple and quick, with no programming experience required.
+WIZ is a data analysis program designed with the purpose of making operations on mid-to-large sized data sets such as slicing, fitting, fourier-transforming, and plotting with Matplotlib simple and quick, with no programming experience required. Extensive documentation can be found [in the wiki](https://github.com/Tominator368/dataManipulation/wiki)
 
 ## How To Be a WIZard
 
@@ -48,37 +48,27 @@ numpy.sin(numpy.pi/2)
 ```
 The expression would evaluate to `1`. NumPy's documentation can be found [here](http://docs.scipy.org/doc/numpy/reference/). The namespace lookup feature makes user written expressions in WIZ extremely powerful.
 
-For more information, see [WIZ's wiki](https://github.com/Tominator368/dataManipulation/wiki)
+For more information, see [WIZ's wiki](https://github.com/Tominator368/dataManipulation/wiki).
 
 ### Credits
 WIZ's development was made possible through extensive usage of the following open source projects:
 
-Project: [Python](http://www.python.org/) 
-
+Project: [Python](http://www.python.org/)  
 License: https://www.python.org/download/releases/2.7/license/
 
-
-Project: [SciPy](https://www.scipy.org/)
-
+Project: [SciPy](https://www.scipy.org/)  
 License: https://www.scipy.org/scipylib/license.html
 
-
-Project: [Matplotlib](http://matplotlib.org/)
-
+Project: [Matplotlib](http://matplotlib.org/)  
 License: http://matplotlib.org/users/license.html
 
-
-Project: [Tcl/Tk](https://www.tcl.tk/)
-
+Project: [Tcl/Tk](https://www.tcl.tk/)  
 License: https://www.tcl.tk/software/tcltk/license.html
 
-
-Project: [Pandas](http://pandas.pydata.org/)
-
+Project: [Pandas](http://pandas.pydata.org/)  
 License: http://pandas.pydata.org/pandas-docs/stable/overview.html#license
 
-
-Special thanks to Josh Grebler for the clever name & logo.
+Special thanks to Josh Grebler for the clever name and logo.
 
 ### Copyright Information
 
