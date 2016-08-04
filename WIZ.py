@@ -8,6 +8,7 @@ import numpy as np
 import json
 import os
 import re
+from TemplateCreator import TemplateCreator
 
 
 class InitialWindow(Tk.Tk):
@@ -21,7 +22,7 @@ class InitialWindow(Tk.Tk):
         "DPI": 100,
         "Style": ["ggplot"],
         "User Font Size": 12,
-        "Icon Location": r'C:\Users\thoma\PycharmProjects\dataManipulation\res\WIZ.ico'
+        "Icon Location": r'res\WIZ.ico'
     }
 
     def __init__(self, win=None, *args, **kwargs):
@@ -54,6 +55,8 @@ class InitialWindow(Tk.Tk):
             blankButton.pack(fill=Tk.X, side=Tk.TOP)
         rawButton = ttk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
         rawButton.pack(fill=Tk.X, side=Tk.TOP)
+        templateButton = ttk.Button(self.baseFrame, text="Create Project Template", command=lambda: TemplateCreator(self))
+        templateButton.pack(fill=Tk.X, side=Tk.TOP)
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""

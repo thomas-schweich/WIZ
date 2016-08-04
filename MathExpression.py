@@ -46,9 +46,9 @@ class MathExpression:
     modules = (np, math)
 
     def __init__(self, expression, variables=None, operators=operators, modules=modules, fallbackFunc=None):
-        self.variables = variables
-        self.operators = operators
-        self.modules = modules
+        self.variables = variables if variables is not None else {}
+        self.operators = operators if operators is not None else MathExpression.operators
+        self.modules = modules if modules is not None else MathExpression.modules
         self.fallbackFunc = fallbackFunc
         self.expression = self.genFromString(expression)
         self.loops = 0
