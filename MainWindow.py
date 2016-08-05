@@ -41,7 +41,7 @@ class MainWindow(Tk.Tk):
         self.bottomFrame = Tk.Frame(self)
         self.bottomFrame.pack(side=Tk.BOTTOM)
         self.saveButton = Tk.Button(self.bottomFrame, text="Save", command=self.saveProject)
-        self.loadButton = Tk.Button(self.bottomFrame, text="Load More Raw Data", command=self.loadRaw)
+        self.loadButton = Tk.Button(self.bottomFrame, text="More Options", command=self.loadRaw)
         self.saveButton.pack(side=Tk.LEFT)
         self.loadButton.pack(side=Tk.RIGHT)
         matplotlib.rcParams["agg.path.chunksize"] = self.settings["Plot Chunk Size"]
@@ -53,7 +53,7 @@ class MainWindow(Tk.Tk):
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         self.canvas.mpl_connect("button_press_event", lambda event: self.onClick(event))
-        # self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
+        self.canvas.mpl_connect("key_press_event", lambda event: self.on_key_event(event))  # Buggy??
 
     def _quit(self):
         """Closes the MainWindow"""

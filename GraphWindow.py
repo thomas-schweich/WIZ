@@ -388,8 +388,11 @@ class GraphWindow(Tk.Frame):
 
     def removeGraph(self):
         """Removes .graph from its window"""
-        self.graph.window.removeGraph(self.graph)
-        self.close()
+        if tkMessageBox.askokcancel("WIZ", "Are you sure?"):
+            self.graph.window.removeGraph(self.graph)
+            self.close()
+        else:
+            self.window.lift()
 
     def saveGraph(self):
         """Saves a pdf, png, or svg of .graph to a user specified directory"""

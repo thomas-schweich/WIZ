@@ -11,6 +11,7 @@ import os
 import re
 from TemplateCreator import TemplateCreator
 import pickle
+import tkMessageBox
 
 
 class InitialWindow(Tk.Tk):
@@ -63,6 +64,8 @@ class InitialWindow(Tk.Tk):
             projFromTemplate = ttk.Button(self.baseFrame, text="Create Project From Template",
                                           command=self.createFromTemplate)
             projFromTemplate.pack(fill=Tk.X, side=Tk.TOP)
+        ttk.Button(self.baseFrame, text="About", command=lambda:
+        tkMessageBox.showinfo("WIZ", "Created By: Thomas Schweich")).pack(fill=Tk.X, side=Tk.TOP)
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
