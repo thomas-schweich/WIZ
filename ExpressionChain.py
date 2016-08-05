@@ -5,6 +5,8 @@ from itertools import chain
 class ExpressionChain:
     """ An iterable which stores MathExpressions and allows the use of previous expressions as variables when iterated
     """
+    __author__ = "Thomas Schweich"
+
     def __init__(self, variables=None, operators=None, modules=None,
                  fallbackFunc=None):
         """Takes an initial argument for 'variables', which is then appended to as expressions are evaluated
@@ -18,6 +20,9 @@ class ExpressionChain:
         self.modules = modules
         self.fallbackFunc = fallbackFunc
         self.finalized = False
+
+    def addVariable(self, name, value):
+        self.variables.update({name:value})
 
     def addExp(self, expression, name=""):
         """Adds a string to be evaluated using MathExpression and a name by which it can be referred to in the future
@@ -43,7 +48,10 @@ class ExpressionChain:
                              fallbackFunc=self.fallbackFunc)
         exp.evaluate()
         self.variables.update({name: exp.expression})
-        return exp.expression
+        return exp.expression, name
+
+    def __len__(self):
+        return len(self.formulae)
 
     @staticmethod
     def testCreate():

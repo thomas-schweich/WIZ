@@ -8,6 +8,7 @@ from GraphWindow import GraphWindow
 from numbers import Number
 from MathExpression import MathExpression
 import math
+import tkMessageBox
 
 
 class Graph:
@@ -37,6 +38,7 @@ class Graph:
         self.mode = ""
         self.master = False
         self.isOpen = False
+        self.chainData = {}
         # TODO Make .title vs. getTitle() consistent
         # TODO xData and yData functions
 
@@ -62,7 +64,8 @@ class Graph:
         """Returns a dict of all class data which is not a function and not a numpy array"""
         return {key: value for key, value in self.__dict__.items() if not key.startswith("__") and
                 not callable(key) and not (key == "rawXData" or key == "rawYData" or key == "graphWindow" or
-                                           key == "window" or key == "subplot" or key == "radioVar")}
+                                           key == "window" or key == "subplot" or key == "radioVar" or
+                                           key == "chainData")}
 
     def useMetaFrom(self, other):
         """Sets the metadata of this graph to the metadata of other"""
@@ -411,6 +414,34 @@ def y(graph, index=None):
 
 def length(graph):
     return len(graph)
+
+
+def getSlice(graph, start, stop, step=1):
+    return graph.slice(start, stop, step)
+
+
+def linearFit(graph):
+    return _safeFit(graph, lambda x, a, b: a * x + b)
+
+
+def quadraticFit(graph):
+    return _safeFit(graph, lambda x, a, b, c: a * x ** 2 + b * x + c)
+
+
+def cubicFit(graph):
+    return _safeFit(graph, lambda x, a, b, c, d: a * x ** 3 + b * x ** 2 + c * x + d)
+
+
+def quarticFit(graph):
+    return _safeFit(graph, lambda x, a, b, c, d, e: a * x ** 4 + b * x ** 3 + c * x ** 2 + d * x + e)
+
+
+def _safeFit(graph, fitFunction):
+    """Safely returns a fit, displaying an error message if no fit is found"""
+    try:
+        return graph.getCurveFit(fitFunction=fitFunction)
+    except RuntimeError as r:
+        tkMessageBox.showerror("Fit", "Couldn't fit function.\n" + str(r))
 
 
 def getFFT(graph):

@@ -5,10 +5,12 @@ from MainWindow import MainWindow
 import tkFileDialog
 import FileDialog
 import numpy as np
+import math
 import json
 import os
 import re
 from TemplateCreator import TemplateCreator
+import pickle
 
 
 class InitialWindow(Tk.Tk):
@@ -55,8 +57,12 @@ class InitialWindow(Tk.Tk):
             blankButton.pack(fill=Tk.X, side=Tk.TOP)
         rawButton = ttk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
         rawButton.pack(fill=Tk.X, side=Tk.TOP)
-        templateButton = ttk.Button(self.baseFrame, text="Create Project Template", command=lambda: TemplateCreator(self))
+        templateButton = ttk.Button(self.baseFrame, text="Create Template", command=lambda: TemplateCreator(self))
         templateButton.pack(fill=Tk.X, side=Tk.TOP)
+        if not self.win:
+            projFromTemplate = ttk.Button(self.baseFrame, text="Create Project From Template",
+                                          command=self.createFromTemplate)
+            projFromTemplate.pack(fill=Tk.X, side=Tk.TOP)
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
@@ -72,9 +78,9 @@ class InitialWindow(Tk.Tk):
         except (IOError, TypeError):
             loading.pack_forget()
             self.error.pack()
-            raise
+            return
 
-    def loadRawData(self):
+    def loadRawData(self, callFunc=None):
         """Loads data from a text file using MainWindow.loadData() and prompts the user for a slice"""
         self.error.pack_forget()
         self.newFrame.destroy()
@@ -103,7 +109,7 @@ class InitialWindow(Tk.Tk):
                 numbers = re.findall(regex, firstline)
             except NameError:
                 self.error.pack()
-                raise
+                return
             tree = ttk.Treeview(self.newFrame, height=10)
             tree.pack()
             cols = ()
@@ -141,13 +147,14 @@ class InitialWindow(Tk.Tk):
             chunkVal.set(1)
             Tk.Checkbutton(self.newFrame, text="Read data in chunks (recommended)", variable=chunkVal).pack()
             Tk.Button(self.newFrame, text="Load", command=lambda: self.load(
-                path, xEntry.get(), yEntry.get(), headerVal.get(), cleanVal.get(), chunkVal.get())).pack()
+                path, xEntry.get(), yEntry.get(), headerVal.get(), cleanVal.get(), chunkVal.get(),
+                callFunc=callFunc)).pack()
         else:
-            self.load(path, shouldChunk=False)
+            self.load(path, shouldChunk=False, callFunc=callFunc)
         self.update()
         self.lift()
 
-    def load(self, path, xCol=0, yCol=1, hasHeaders=False, shouldClean=True, shouldChunk=True):
+    def load(self, path, xCol=0, yCol=1, hasHeaders=False, shouldClean=True, shouldChunk=True, callFunc=None):
         self.newFrame.destroy()
         self.newFrame = Tk.Frame(self.baseFrame)
         self.newFrame.pack(side=Tk.BOTTOM)
@@ -173,7 +180,7 @@ class InitialWindow(Tk.Tk):
             loading.pack_forget()
             if progress: progress.pack_forget()
             self.error.pack()
-            raise
+            return
         loading.pack_forget()
         if progress: progress.pack_forget()
         Tk.Label(self.newFrame, text="How much data would you like to use?").pack()
@@ -188,7 +195,7 @@ class InitialWindow(Tk.Tk):
         Tk.Radiobutton(self.newFrame, text="By x-value (from %d to %d)" % (data[0][0], data[0][-1]), variable=tkVar,
                        value=1).pack()
         Tk.Button(self.newFrame, text="Create Project" if not self.win else "Add Graph",
-                  command=lambda: self.sliceData(data, tkVar, start.get(), end.get())).pack()
+                  command=lambda: self.sliceData(data, tkVar, start.get(), end.get(), callFunc=callFunc)).pack()
 
     def createBlankProject(self):
         self.quit()
@@ -198,8 +205,9 @@ class InitialWindow(Tk.Tk):
         win.plotGraphs()
         win.mainloop()
 
-    def sliceData(self, data, tkVar, begin, end):
+    def sliceData(self, data, tkVar, begin, end, callFunc=None):
         """Creates a graph of the slice of data and creates a new MainWindow with .graphs assigned to the new graph"""
+        if not callFunc: callFunc = self.createMain
         begin = float(begin)
         end = float(end)
         # By index
@@ -209,6 +217,9 @@ class InitialWindow(Tk.Tk):
         else:  # elif tkVar.get() == 1:
             newBegin, newEnd = np.searchsorted(data[0], np.array([np.float64(begin), np.float64(end)]))
             newDat = data[0][newBegin:newEnd], data[1][newBegin:newEnd]
+        callFunc(newDat)
+
+    def createMain(self, newDat):
         self.quit()
         self.destroy()
         if self.win:
@@ -224,6 +235,47 @@ class InitialWindow(Tk.Tk):
             win.plotGraphs()
             win.mainloop()
 
+    def createFromTemplate(self):
+        self.error.pack_forget()
+        self.newFrame.destroy()
+        self.lift()
+        self.newFrame = Tk.Frame(self.baseFrame)
+        self.newFrame.pack(side=Tk.BOTTOM, expand=True)
+        instructions = Tk.Label(self.newFrame, text="Select Your Template")
+        templatePath = tkFileDialog.askopenfilename(filetypes=[("WIZ Template", ".wizt")])
+        try:
+            with open(templatePath, 'r') as f:
+                chain = pickle.load(f)
+        except (ValueError, IOError):
+            self.error.pack()
+            return
+        instructions.pack_forget()
+        self.loadRawData(callFunc=lambda data: self.applyTemplate(chain, data))
+
+    def applyTemplate(self, expChain, data):
+        win = MainWindow()
+        from Graph import Graph
+        expChain.addVariable('ORIGINAL', Graph(window=win, rawXData=data[0], rawYData=data[1]))
+        import Graph
+        expChain.modules = (Graph, np, math)
+        progress = ttk.Progressbar(win, length=self.defaultWidth, mode="determinate", maximum=len(expChain))
+        progress.pack()
+        info = Tk.Label(win, text="Loading...")
+        info.pack()
+        for gr, name in expChain:
+            gr.setTitle(name)
+            try:
+                win.addGraph(gr)
+            except AttributeError:
+                pass  # Non-Graph object
+            progress.step(1)
+            win.update()
+        progress.destroy()
+        info.destroy()
+        self.quit()
+        self.destroy()
+        win.lift()
+        win.mainloop()
 
 if __name__ == "__main__":
     initial = InitialWindow()
