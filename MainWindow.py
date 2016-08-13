@@ -41,7 +41,7 @@ class MainWindow(Tk.Tk):
         self.bottomFrame = Tk.Frame(self)
         self.bottomFrame.pack(side=Tk.BOTTOM)
         self.saveButton = Tk.Button(self.bottomFrame, text="Save", command=self.saveProject)
-        self.loadButton = Tk.Button(self.bottomFrame, text="More Options", command=self.loadRaw)
+        self.loadButton = Tk.Button(self.bottomFrame, text="More Options", command=self.moreOptions)
         self.saveButton.pack(side=Tk.LEFT)
         self.loadButton.pack(side=Tk.RIGHT)
         matplotlib.rcParams["agg.path.chunksize"] = self.settings["Plot Chunk Size"]
@@ -68,7 +68,7 @@ class MainWindow(Tk.Tk):
     def saveProject(self):
         """Saves this window's graphs and their metadata"""
         path = tkFileDialog.asksaveasfilename(defaultextension=".gee.npy",
-                                              filetypes=[("WIZ Project", ".gee.npy")])
+                                              filetypes=[("WIZ Project", ".gee.npy")], parent=self)
         if not path: return
         rawdata = []
         metadata = []
@@ -155,10 +155,18 @@ class MainWindow(Tk.Tk):
                 '''
                 if not os.path.exists("/tmp"):
                     os.makedirs("/tmp")
-                with open("/tmp/arr.npy", "w+") as tempFile:
+                    print "Created tmp directory"
+                else:
+                    print "/tmp already exists; using existing"
+                num = 0
+                while os.path.exists("/tmp/arr%s.npy" % str(num)):
+                    num += 1
+                with open("/tmp/arr%s.npy" % str(num), "w+") as tempFile:
                     mmap = open_memmap(tempFile.name, mode='w+', dtype=np.float64, shape=(numLines, 2))
                     #  hd = h5py.File("project.hdf5")
                     #  mmap = hd.create_group("Original").create_dataset("Raw", (numLines, 2), dtype=np.float64)
+                    #  pass  # for below v
+                #  mmap = np.ndarray(dtype=np.float64, shape=(numLines, 2))
                 # Parse "chunk size" number points at a time to avoid overflow
                 n = 0
                 for chunk in pd.read_table(path, chunksize=chunkSize, dtype=np.float64, usecols=[xCol, yCol],
@@ -181,19 +189,30 @@ class MainWindow(Tk.Tk):
         return xData, yData
         # TODO .sac files, HDF5 format
 
-    def loadRaw(self):
+    def moreOptions(self):
         from WIZ import InitialWindow
         InitialWindow(win=self)
 
     def addGraph(self, graph, parent=None, plot=True):
         """Adds a graph to this MainWindow's .graphs list, plotting it unless plot is set to false"""
         graphs = [gr for ax in self.graphs for gr in ax]
-        n = sum(1 for gr in graphs if gr.getTitle() == graph.getTitle())
-        if n:
-            graph.setTitle("%s (%d)" % (str(graph.getTitle()), n))
+        # n = sum(1 for gr in graphs if gr.getTitle() == graph.getTitle())  # or
+                # (str(gr.getTitle()).endswith() and gr.getTitle() == graph.getTitle()[:-4]))
+        n = 1
+        modified = False
+        while any(gr for gr in graphs if gr.getTitle() == graph.getTitle()):
+            oldTitle = graph.getTitle()
+            if modified: graph.setTitle(oldTitle[:oldTitle.rfind(" ")])  # Since adding " (%d)" starts with a space
+            graph.setTitle("%s (%d)" % (graph.getTitle(), n))
+            modified = True
+            n += 1
+        # if n:
+        #    graph.setTitle("%s (%d)" % (str(graph.getTitle()), n))
         self.addGraphToAxisList(self.graphs, graph, parent=parent)
+        print "Graphs list: %s" % str(self.graphs)
         if plot:
             self.plotGraphs()
+            print "Graphs plotted."
         return graph
 
     def replaceGraph(self, oldGraph, newGraph, plot=True):
@@ -277,7 +296,7 @@ class MainWindow(Tk.Tk):
                     g.setSubplot(subplots[idx])
                     master = g
             if master:
-                master.plot()
+                master.plot()  # Ensures master is plotted last, thus giving the axis its metadata
             else:
                 axis[-1].master = True
         self.canvas.draw()

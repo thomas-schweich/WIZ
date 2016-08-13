@@ -388,7 +388,7 @@ class GraphWindow(Tk.Frame):
 
     def removeGraph(self):
         """Removes .graph from its window"""
-        if tkMessageBox.askokcancel("WIZ", "Are you sure?"):
+        if tkMessageBox.askokcancel("WIZ", "Are you sure?", parent=self):
             self.graph.window.removeGraph(self.graph)
             self.close()
         else:
@@ -438,7 +438,7 @@ class GraphWindow(Tk.Frame):
                 graphVars[graph.getTitle()] = copy(graph)
         print graphVars
         exp = MathExpression(str(expression), modules=(Graph, np, math), variables=graphVars, fallbackFunc=self.graph.useYForCall)
-        tkButton.config(text="Loading...")
+        tkButton.config(text="Loading...", relief=Tk.SUNKEN)
         self.graph.window.update()
         try:
             exp.evaluate()
@@ -447,7 +447,7 @@ class GraphWindow(Tk.Frame):
             tkMessageBox.showwarning("Failed To Parse", "The parser combined the parts of your expression until it "
                                                         "reached the expression below.\n" + str(e))
             self.window.lift()
-            tkButton.config(text="Parse Expression")
+            tkButton.config(text="Parse Expression", relief=Tk.RAISED)
             return
         try:
             graph.window = self.graph.window
@@ -455,7 +455,7 @@ class GraphWindow(Tk.Frame):
         except AttributeError:
             tkMessageBox.showinfo("Result", str(graph))
             self.window.lift()
-        tkButton.config(text="Parse Expression")
+        tkButton.config(text="Parse Expression", relief=Tk.RAISED)
 
     @staticmethod
     def avoidDuplicates(path, getExtension=False):

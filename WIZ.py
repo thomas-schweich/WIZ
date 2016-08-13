@@ -42,21 +42,23 @@ class InitialWindow(Tk.Tk):
         self.iconbitmap(self.settings["Icon Location"])
         self.wm_title("WIZ")
         self.defaultWidth, self.defaultHeight = self.winfo_screenwidth() * .25, self.winfo_screenheight() * .5
-        self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
-                                       0))
+        #  self.geometry("%dx%d+%d+%d" % (self.defaultWidth, self.defaultHeight, self.defaultWidth * 1.5,
+        #                              0))
         self.win = win
-        self.baseFrame = Tk.Frame(master=self)
-        self.baseFrame.pack(fill=Tk.X, side=Tk.TOP)
-        self.newFrame = Tk.Frame(self.baseFrame)
+        self.baseFrame = Tk.Frame(master=self, width=self.defaultWidth, height=self.defaultHeight)
+        self.baseFrame.pack(fill=Tk.X, side=Tk.TOP, expand=True)
+        self.newFrame = Tk.Frame(self.baseFrame, width=self.defaultWidth, height=self.defaultHeight)
         self.error = Tk.Label(self.baseFrame, text="Invalid selection", fg="red")
-        text = Tk.Label(self.baseFrame, text="Welcome to WIZ")
+        text = Tk.Label(self.baseFrame,
+                        text="                              Welcome to WIZ                              ")
         text.pack()
         if not self.win:
             loadButton = ttk.Button(self.baseFrame, text="Load Project", command=self.loadProject)
-            loadButton.pack(fill=Tk.X, side=Tk.TOP)
+            loadButton.pack(fill=Tk.X, side=Tk.TOP, expand=True)
             blankButton = ttk.Button(self.baseFrame, text="New Blank Project", command=self.createBlankProject)
             blankButton.pack(fill=Tk.X, side=Tk.TOP)
-        rawButton = ttk.Button(self.baseFrame, text="Load Raw Data", command=self.loadRawData)
+        rawButton = ttk.Button(self.baseFrame, text="Load Raw Data" if not self.win else "Load More Raw Data",
+                               command=self.loadRawData)
         rawButton.pack(fill=Tk.X, side=Tk.TOP)
         templateButton = ttk.Button(self.baseFrame, text="Create Template", command=lambda: TemplateCreator(self))
         templateButton.pack(fill=Tk.X, side=Tk.TOP)
@@ -64,8 +66,11 @@ class InitialWindow(Tk.Tk):
             projFromTemplate = ttk.Button(self.baseFrame, text="Create Project From Template",
                                           command=self.createFromTemplate)
             projFromTemplate.pack(fill=Tk.X, side=Tk.TOP)
-        ttk.Button(self.baseFrame, text="About", command=lambda:
-        tkMessageBox.showinfo("WIZ", "Created By: Thomas Schweich")).pack(fill=Tk.X, side=Tk.TOP)
+        ttk.Button(self.baseFrame, text="About", command=self.about).pack(fill=Tk.X, side=Tk.TOP)
+
+    def about(self):
+        tkMessageBox.showinfo("WIZ", "Created By: Thomas Schweich")
+        self.lift()
 
     def loadProject(self):
         """Loads an .npz file using MainWindow.loadProject"""
@@ -220,16 +225,19 @@ class InitialWindow(Tk.Tk):
         else:  # elif tkVar.get() == 1:
             newBegin, newEnd = np.searchsorted(data[0], np.array([np.float64(begin), np.float64(end)]))
             newDat = data[0][newBegin:newEnd], data[1][newBegin:newEnd]
-        callFunc(newDat)
+        callFunc(newDat)  # Currently either createMain() or applyTemplate())
 
     def createMain(self, newDat):
-        self.quit()
+        # self.quit()
         self.destroy()
         if self.win:
             gr = Graph(window=self.win, title="Raw Data")
+            print "Additional Graph Created"
             gr.setRawData(newDat)
+            print "Raw Data Set"
             self.win.addGraph(gr)
-            self.win.plotGraphs()
+            print "Added to Window"
+            #self.win.plotGraphs()
         else:
             win = MainWindow()
             gr = Graph(window=win, title="Raw Data")

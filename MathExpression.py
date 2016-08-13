@@ -40,9 +40,14 @@ class MathExpression:
     def returnDict(key, value):
         return {key: value}
 
+    '''
     operators = collections.OrderedDict(
         (("(", None), (")", None), (",", None), ("^", forceReversible(operator.pow)), ("/", forceReversible(operator.div)),
          ("*", forceReversible(operator.mul)), ("+", forceReversible(operator.add)), ("-", forceReversible(operator.sub))))
+    '''
+    operators = [{"(": None, ")": None, ",": None}, {"^": forceReversible(operator.pow)},
+                 {"/": forceReversible(operator.div), "*": forceReversible(operator.mul)},
+                 {"+": forceReversible(operator.add), "-": forceReversible(operator.sub)}]
     modules = (np, math)
 
     def __init__(self, expression, variables=None, operators=operators, modules=modules, fallbackFunc=None):
@@ -56,7 +61,8 @@ class MathExpression:
 
     def genFromString(self, string):
         """Separates string by .operators using regex"""
-        operators = self.operators.keys()
+        # operators = self.operators.keys()
+        operators = [o for d in self.operators for o in d.keys()]  # o: operator, d: dict
         operators.sort(key=lambda x: -len(x))
         exp = re.findall(r'<.*?>|' + "|".join(["%s" % re.escape(op) for op in operators]) + '|[\.\w]+', string)
         print exp
@@ -91,7 +97,8 @@ class MathExpression:
             subExp = leftSide[leftInner:]
             print "Sub Expression: " + str(subExp)
             callerIndex = leftInner - 2
-            if callerIndex > -1 and exp[callerIndex] not in self.operators:
+            allOps = [o for d in self.operators for o in d.keys()]
+            if callerIndex > -1 and exp[callerIndex] not in allOps:
                 print "Calling function...."
                 # Call function if in format something(arg0, arg1...) if "something" is not an operator
                 args = []
@@ -117,10 +124,10 @@ class MathExpression:
                 print "Evaluating expression...."
                 # Otherwise, evaluate the expression within the parenthesis, replacing the range with the result
                 newExp = subExp[:]
-                for op in self.operators:
+                for order in self.operators:
                     for index, part in enumerate(subExp):
                         self.loops += 1
-                        if part == op:  # Changing to allow for equal level operators
+                        if part in order.keys():  # Changing to allow for equal level operators ## ch
                             newLocation = newExp.index(part)
                             prevIndex = newLocation - 1
                             nextIndex = newLocation + 1
@@ -131,7 +138,8 @@ class MathExpression:
                                 raise MathExpression.ParseFailure(part, i)
                             print "Combining %s with %s using '%s' operator" % (str(prev), str(nxt), str(part))
                             if not (isinstance(prev, np.ndarray) and not isinstance(nxt, np.ndarray)):
-                                solution = self.operators[part](prev, nxt)
+                                # Call the function stored in this order's dict under the operator
+                                solution = order[part](prev, nxt)
                             else:
                                 raise MathExpression.SyntaxError(prev)
                             print "Solution: " + str(solution)

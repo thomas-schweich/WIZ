@@ -14,7 +14,7 @@ class ExpressionChain:
         The remaining options stay constant, and are simply used to customize the MathExpression
         """
         self.formulae = []
-        self.iterator = None
+        self._iterator = None
         self.variables = {} if not variables else variables
         self.operators = operators
         self.modules = modules
@@ -35,14 +35,17 @@ class ExpressionChain:
 
     def __iter__(self):
         """Creates an iterator from the given expressions in order, returns self ready for use in a loop"""
-        self.iterator = chain(*self.formulae)
+        self._iterator = chain(*self.formulae)
         return self
 
     def next(self):
-        """Generates the next result from .formulae, allowing use of previously defined variables"""
-        formula = next(self.iterator)
+        """Generates the next result from .formulae, allowing use of previously defined variables
+
+        Returns a tuple of (resulting expression, name)
+        """
+        formula = next(self._iterator)
         print "Formula: %s" % formula
-        name = next(self.iterator)
+        name = next(self._iterator)
         print "Name: %s" % name
         exp = MathExpression(formula, variables=self.variables, operators=self.operators, modules=self.modules,
                              fallbackFunc=self.fallbackFunc)
@@ -52,12 +55,3 @@ class ExpressionChain:
 
     def __len__(self):
         return len(self.formulae)
-
-    @staticmethod
-    def testCreate():
-        chain = ExpressionChain()
-        chain.addExp("10 + 5", "Bob")
-        chain.addExp("<Bob> + 5", "Joe")
-        chain.addExp("<Joe> + 5")
-        for i in chain:
-            print "Result of chain procedure: %s" % i

@@ -452,6 +452,3 @@ def getFFT(graph):
 
 def getDispFFT(graph):
     return ((getFFT(graph) ** 2) / (1.0 / x(graph, 1) - x(graph, 0) * length(graph))) ** .5
-
-
-
