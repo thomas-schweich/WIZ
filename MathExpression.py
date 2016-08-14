@@ -1,5 +1,4 @@
 import operator
-import collections
 import numpy as np
 import math
 import re
@@ -80,9 +79,7 @@ class MathExpression:
         """Recursively evaluates expressions starting with innermost parenthesis, working outwards
 
         Iteratively solves sub-expressions (grouped by parenthesis) in the order of .operators
-        Note: Order of operations is strict. Equal precedence not yet allowed.
         """
-        # TODO Equal operator precedence
         try:
             isCompleteExp = len(exp) >= 3
         except TypeError:
@@ -106,10 +103,17 @@ class MathExpression:
                     args.append(self.evaluateExpression(list(subExp[:subExp.index(",")])))
                     del subExp[:subExp.index(",") + 1]
                 args.append(self.evaluateExpression(subExp))
+                # kwargs = {}
+                '''
+                for i, arg in enumerate(args):
+                    if isinstance(arg, dict):
+                        kwargs.update(args.pop(i))
+                '''
                 print "Arguments: " + str(args)
+                #  print "Kwargs: " + str(kwargs)
                 funcToCall = self._interpret(exp[callerIndex])
                 try:
-                    result = funcToCall(*args)
+                    result = funcToCall(*args)  # , **kwargs)
                 except:
                     try:
                         result = self.fallbackFunc(funcToCall, *args)
