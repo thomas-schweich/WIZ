@@ -1,12 +1,14 @@
 # WIZ Is Zippy
 
-WIZ is a data analysis program designed with the purpose of making operations on mid-to-large sized data sets such as slicing, fitting, fourier-transforming, and plotting with Matplotlib simple and quick, with no programming experience required. Extensive documentation can be found [in the wiki](https://github.com/Tominator368/dataManipulation/wiki).
+WIZ is a data analysis program designed with the purpose of making operations on mid-to-large sized data sets such as slicing, fitting, fourier-transforming, and plotting with Matplotlib simple and quick, with no programming experience required. Extensive documentation can be found [in the wiki][wiki].  
+
+WIZ is in beta stages and is prone to bugs! However, it can still be a very useful tool. Just check and double-check anything that you do with WIZ, and note that some things may not be seamless.
 
 ## How To Be a WIZard
-The latest releases of WIZ can be found [here](https://github.com/Tominator368/dataManipulation/releases).
+The latest releases of WIZ can be found [here][releases].
 
 #### Windows
-* Extract [the .zip file](https://github.com/Tominator368/dataManipulation/releases) into a folder of your choice
+* Extract [the .zip file][releases] into a folder of your choice
 * Scroll near the bottom of the folder
 * Right click on WIZ.exe > Send to... > Desktop (create shortcut)
 * Double-click the desktop icon
@@ -52,7 +54,7 @@ numpy.sin(numpy.pi/2)
 ```
 The expression would evaluate to `1`. NumPy's documentation can be found [here](http://docs.scipy.org/doc/numpy/reference/). The namespace lookup feature makes user written expressions in WIZ extremely powerful.
 
-For more information, see [WIZ's wiki](https://github.com/Tominator368/dataManipulation/wiki).
+For more information, see [WIZ's wiki][wiki].
 
 ### Credits
 WIZ's development was made possible through extensive usage of the following open source projects:
@@ -79,4 +81,7 @@ Special thanks to Josh Grebler for the clever name and logo.
 Copyright (c) 2016 Thomas Schweich
 
 TODO: License, open source??
+
+[releases]: https://github.com/thomas-schweich/WIZ/releases
+[wiki]: https://github.com/thomas-schweich/WIZ/wiki
 
