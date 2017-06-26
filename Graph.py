@@ -1,4 +1,5 @@
 import matplotlib
+
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +14,8 @@ import tkMessageBox
 
 class Graph:
     __author__ = "Thomas Schweich"
+
+    non_serializable_attrs = {'rawXData', 'rawYData', 'graphWindow', 'window', 'subplot', 'radioVar', 'chainData'}
 
     def __init__(self, window=None, title="", xLabel="", yLabel="", rawXData=np.array([0]), rawYData=np.array([0]),
                  xMagnitude=0, yMagnitude=0, autoScaleMagnitude=False, subplot=None):
@@ -63,9 +66,7 @@ class Graph:
     def getMetaData(self):
         """Returns a dict of all class data which is not a function and not a numpy array"""
         return {key: value for key, value in self.__dict__.items() if not key.startswith("__") and
-                not callable(key) and not (key == "rawXData" or key == "rawYData" or key == "graphWindow" or
-                                           key == "window" or key == "subplot" or key == "radioVar" or
-                                           key == "chainData")}
+                not callable(key) and key not in Graph.non_serializable_attrs}
 
     def useMetaFrom(self, other):
         """Sets the metadata of this graph to the metadata of other"""
@@ -200,6 +201,44 @@ class Graph:
                      autoScaleMagnitude=self.autoScaleMagnitude, title="Fit for " + self.title, xLabel=self.xLabel,
                      yLabel=self.yLabel)
 
+    def getSinFit(self):
+        """Returns a Graph of a sine wave most closely fitting this graph"""
+        tt = self.getRawData()[0]
+        yy_raw = self.getRawData()[1]
+
+        # Subtract a linear fit from the function
+        line_func = lambda x, a, b: a * x + b
+        popt, pcov = curve_fit(line_func, tt, yy_raw)
+        slope, intercept = popt
+        linear_fit = line_func(tt, *popt)
+
+        yy = yy_raw - linear_fit
+
+        avg_delta = (tt.max() - tt.min()) / (len(tt) - 1)  # Find average interval between points
+        ff = np.fft.fftfreq(len(tt), avg_delta)  # assume uniform spacing
+        Fyy = abs(np.fft.fft(yy))
+        guess_freq = abs(
+            ff[np.argmax(Fyy[1:]) + 1])  # excluding the zero frequency "peak", which is related to offset
+        guess_amp = np.std(yy) * 2. ** 0.5
+        guess_offset = np.mean(yy)
+        guess = np.array([guess_amp, 2. * np.pi * guess_freq, 0., guess_offset])
+
+        def sinfunc(t, A, w, p, c):
+            return A * np.sin(w * t + p) + c
+
+        popt, pcov = curve_fit(sinfunc, tt, yy, p0=guess)
+        A, w, p, c = popt
+        fitfunc = lambda t: A * np.sin(w * t + p) + c
+
+        newY = fitfunc(self.getRawData()[0])
+
+        # Add back the linear fit
+        newY += linear_fit
+
+        return Graph(self.window, rawXData=np.array(self.getRawData()[0]), rawYData=newY,
+                     autoScaleMagnitude=self.autoScaleMagnitude, title="Fit for " + self.title, xLabel=self.xLabel,
+                     yLabel=self.yLabel)
+
     def getFFT(self):
         """Returns a Graph of the Single-Sided Amplitude Spectrum of y(t)"""
         x, y = self.getRawData()
@@ -241,8 +280,10 @@ class Graph:
         """
         end = len(self.getRawData()[0]) - 1 if not end else end
         return Graph(self.window, title=str(self.title) + " from point " + str(int(begin)) + " to " + str(int(end)),
-                     xLabel=self.xLabel, yLabel=self.yLabel, rawXData=self.getRawData()[0][int(begin):int(end):int(step)],
-                     rawYData=self.getRawData()[1][int(begin):int(end):int(step)], autoScaleMagnitude=self.autoScaleMagnitude)
+                     xLabel=self.xLabel, yLabel=self.yLabel,
+                     rawXData=self.getRawData()[0][int(begin):int(end):int(step)],
+                     rawYData=self.getRawData()[1][int(begin):int(end):int(step)],
+                     autoScaleMagnitude=self.autoScaleMagnitude)
 
     def onClick(self, event):
         """Opens this Graph's GraphWindow if the event is within its axes and was a double click"""

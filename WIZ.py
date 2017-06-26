@@ -109,14 +109,24 @@ class InitialWindow(Tk.Tk):
                 for i, line in enumerate(f):
                     if i == 0:
                         firstline = line
+                    if i == 1:
+                        secondline = line
                     lines.append(line)
                     if i == 10:
                         break
-            regex = r'-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?|\w+'
+            regex = r'[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?'
             try:
                 numbers = re.findall(regex, firstline)
+                print 'First Line: "%s"\nNumbers: %s' % (firstline, str(numbers))
             except NameError:
                 self.error.pack()
+                return
+            try:
+                if len(numbers) == 0:
+                    numbers = re.findall(regex, secondline)
+                    print 'Second Line "%s"\nNumbers (second line): %s' % (secondline, str(numbers))
+            except NameError:
+                self.eror.pack()
                 return
             tree = ttk.Treeview(self.newFrame, height=10)
             tree.pack()

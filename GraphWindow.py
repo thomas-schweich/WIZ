@@ -129,6 +129,7 @@ class GraphWindow(Tk.Frame):
         self.fitBox = self.addWidget(Tk.Radiobutton, command=self.refreshOptions, text="Fit Options",
                                      variable=self.radioVar, value=0)
         self.fitBox.val = 0
+        self.addWidget(Tk.Button, parent=self.fitBox, command=self.sinFit, text="Sinusoidal Fit")
         self.addWidget(Tk.Button, parent=self.fitBox, command=self.quarticFit, text="Quartic Fit")
         self.addWidget(Tk.Button, parent=self.fitBox, command=self.cubicFit, text="Cubic Fit")
         self.addWidget(Tk.Button, parent=self.fitBox, command=self.quadraticFit, text="Quadratic Fit")
@@ -341,6 +342,18 @@ class GraphWindow(Tk.Frame):
         except RuntimeError as r:
             tkMessageBox.showerror("Fit", "Couldn't fit function.\n" + str(r))
             self.window.lift()
+
+    def safeSinFit(self):
+        """ Safely returns a sinusoidal fit """
+        try:
+            return self.graph.getSinFit()
+        except RuntimeError as r:
+            tkMessageBox.showerror("Fit", "Couldn't fit function.\n" + str(r))
+            self.window.lift()
+
+    def sinFit(self):
+        """Plots a sine fit of the Graph's data with reference"""
+        self.plotWithReference(self.safeSinFit())
 
     def quarticFit(self):
         """Plots a quartic fit of the Graph's data with reference"""
