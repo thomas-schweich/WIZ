@@ -8,10 +8,8 @@ WIZ is in beta stages and is prone to bugs! However, it can still be a very usef
 The latest releases of WIZ can be found [here][releases].
 
 #### Windows
-* Extract [the .zip file][releases] into a folder of your choice
-* Scroll near the bottom of the folder
-* Right click on WIZ.exe > Send to... > Desktop (create shortcut)
-* Double-click the desktop icon
+* Follow the instructions given by double-clicking [the latest installer.][releases]
+* Anaconda is reccomended if you would prefer to run the code natively.
 
 #### Mac and Linux
 * Binaries coming soon. Python code requires SciPy, NumPy, Pandas, Tkinter, and Matplotlib.
