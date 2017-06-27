@@ -1,11 +1,1 @@
-{
-  "Load Chunk Size": 100000,
-  "Style": [
-    "ggplot"
-  ],
-  "User Font Size": 14,
-  "Icon Location": "res/WIZ.ico",
-  "Max Preview Points": 100000,
-  "Plot Chunk Size": 100000,
-  "DPI": 271
-}
+{"Load Chunk Size": 100000, "Style": "ggplot", "User Font Size": 14, "Icon Location": "res/WIZ.ico", "Max Preview Points": 100000, "Plot Chunk Size": 100000, "DPI": 271}

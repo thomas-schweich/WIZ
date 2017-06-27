@@ -12,7 +12,7 @@ import math
 import tkMessageBox
 
 
-class Graph:
+class Graph(object):
     __author__ = "Thomas Schweich"
 
     non_serializable_attrs = {'rawXData', 'rawYData', 'graphWindow', 'window', 'subplot', 'radioVar', 'chainData'}
@@ -44,24 +44,6 @@ class Graph:
         self.chainData = {}
         # TODO Make .title vs. getTitle() consistent
         # TODO xData and yData functions
-
-    '''
-    def getMetaData(self):
-        """Returns a dict of all data about the graph other than the raw data it uses"""
-        return {
-            "window": self.window,
-            "title": self.title,
-            "xLabel": self.xLabel,
-            "yLabel": self.yLabel,
-            "xMagnitude": self.xMagnitude,
-            "yMagnitude": self.yMagnitude,
-            "autoScaleMagnitude": self.autoScaleMagnitude,
-            "subplot": self.subplot,
-            "show": self.show,
-            "graphWindow": self.graphWindow,
-            "mode": self.mode
-        }
-    '''
 
     def getMetaData(self):
         """Returns a dict of all class data which is not a function and not a numpy array"""
@@ -149,7 +131,31 @@ class Graph:
         xData, yData = self.getRawData()
         return xData / 10 ** xMag, yData / 10 ** yMag
 
-    def plot(self, subplot=None, mode=None, maxPoints=None):
+    @staticmethod
+    def _get_plotter(graph, subplot=None):
+        """ Returns the subplot or matplotlib instance which this graph should be drawn to.
+        
+        If a subplot is specified, its existence is checked, and it is simply returned if it exists. If it does
+        not exist, then a default is used
+        """
+        if subplot:
+            sub = subplot
+        else:
+            sub = graph.subplot
+        if not sub:
+            sub = plt
+        return sub
+
+    _plotters = {'scatter': lambda graph, subplot: Graph._get_plotter(graph, subplot).scatter,
+                 'logy': lambda graph, subplot: Graph._get_plotter(graph, subplot).semilogy,
+                 'logx': lambda graph, subplot: Graph._get_plotter(graph, subplot).semilogx,
+                 'loglog': lambda graph, subplot: Graph._get_plotter(graph, subplot).loglog,
+                 '': lambda graph, subplot: Graph._get_plotter(graph, subplot).plot}
+
+    def _plot_with_proper_axis(self, xVals, yVals, subplot=None, mode=''):
+        Graph._plotters.get(mode)(self, subplot)(xVals, yVals)
+
+    def plot(self, subplot=None, mode='', maxPoints=None):
         """Plots a PyPlot of the graph"""
         xMag, yMag = self.getMagnitudes()
         numPts = len(self.getRawData()[0])
@@ -162,21 +168,9 @@ class Graph:
         else:
             xVals, yVals = self.getScaledMagData()
         if not mode: mode = self.mode
-        if subplot:
-            sub = subplot
-        else:
-            sub = self.subplot
-        if mode == "scatter":
-            (plt if not sub else sub).scatter(xVals, yVals)
-        elif mode == "logy":
-            (plt if not sub else sub).semilogy(xVals, yVals)
-        elif mode == "logx":
-            (plt if not sub else sub).semilogx(xVals, yVals)
-        elif mode == "loglog":
-            (plt if not sub else sub).loglog(xVals, yVals)
-        else:
-            (plt if not sub else sub).plot(xVals, yVals)
-        if not sub:
+        self._plot_with_proper_axis(xVals, yVals, subplot=subplot, mode=mode)
+        sub = Graph._get_plotter(self, subplot)
+        if sub is plt:
             plt.xlabel((str(self.getXLabel()) + "x10^" + str(xMag) if xMag != 0 else str(self.getXLabel())))
             plt.ylabel((str(self.getYLabel()) + "x10^" + str(yMag) if yMag != 0 else str(self.getYLabel())))
             plt.title(str(self.getTitle()))
@@ -253,17 +247,6 @@ class Graph:
         result = Graph(self.window, rawXData=frq, rawYData=abs(Y), title="FFT", xLabel="Freq (Hz)", yLabel="|Y(freq)|")
         result.setGraphMode("loglog")
         return result
-        '''
-        # Other attempt at FFT:
-        x, y = self.getRawData()
-        interval = x[1] - x[0]
-        sampleFrq = 1.0 / interval
-        totalTime = x[-1] - x[0]
-        frqRes = 1 / totalTime
-        n = len(y)
-        frqVector = [i * frqRes for i in range(n / 2)]
-        yFFT = fft(y)
-        '''
 
     def convertUnits(self, xMultiplier=1, yMultiplier=1, xLabel=None, yLabel=None):
         """Returns a Graph with data multiplied by specified multipliers. Allows setting new labels for units."""
@@ -318,12 +301,6 @@ class Graph:
             return graph
         except AttributeError as a:
             raise MathExpression.ParseFailure(str(graph), a)
-
-    '''
-    def __repr__(self):
-        """Returns the Graph's title"""
-        return str(self.title)
-    '''
 
     def __sub__(self, other):
         """Subtracts the y data of two graphs and returns the resulting Graph.

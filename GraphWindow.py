@@ -323,14 +323,6 @@ class GraphWindow(Tk.Frame):
 
     def replaceGraph(self):
         """Places the new graph on the axis of .graph and hides .graph"""
-        '''
-        from Graph import Graph
-        newGraph = Graph(self.graph.window)
-        setattr(newGraph, 'rawXData', self.newGraph.rawXData)
-        setattr(newGraph, 'rawYData', self.newGraph.rawYData)
-        for att in self.newGraph.getMetaData():
-            setattr(newGraph, att, self.newGraph.getMetaData()[att])
-        '''
         self.graph.window.replaceGraph(self.graph, self.newGraph)
         self.graph.window.removeGraph(self.graph)
         self.close()

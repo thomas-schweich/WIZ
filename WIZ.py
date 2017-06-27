@@ -2,6 +2,7 @@ import Tkinter as Tk
 import ttk
 from Graph import Graph
 from MainWindow import MainWindow
+from SettingsWindow import SettingsWindow
 import tkFileDialog
 import FileDialog
 import numpy as np
@@ -66,6 +67,7 @@ class InitialWindow(Tk.Tk):
             projFromTemplate = ttk.Button(self.baseFrame, text="Create Project From Template",
                                           command=self.createFromTemplate)
             projFromTemplate.pack(fill=Tk.X, side=Tk.TOP)
+        ttk.Button(self.baseFrame, text="Settings", command=lambda: SettingsWindow(self.baseFrame).open()).pack(fill=Tk.X, side=Tk.TOP)
         ttk.Button(self.baseFrame, text="About", command=self.about).pack(fill=Tk.X, side=Tk.TOP)
 
     def about(self):
